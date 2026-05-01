@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    name: 'Promptory — AI Prompt History',
+    name: 'Promptory - AI Prompt Directory for ChatGPT',
     description:
       'Auto-save and organize your AI conversations. Search, reuse, and never lose a great prompt again.',
     version: '0.1.0',

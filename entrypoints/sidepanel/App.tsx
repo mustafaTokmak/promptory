@@ -264,7 +264,7 @@ export default function App() {
           </p>
           <div className="mt-2 flex gap-2">
             <a
-              href="https://chromewebstore.google.com/detail/YOUR_EXTENSION_ID/reviews"
+              href="https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg/reviews"
               target="_blank"
               rel="noreferrer"
               onClick={handleDismissReview}
