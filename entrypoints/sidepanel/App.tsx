@@ -47,6 +47,12 @@ export default function App() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [showReviewBanner, setShowReviewBanner] = useState(false);
+  // Two-step review flow: rate first, then either go to CWS (5★) or
+  // collect feedback internally (< 5★) so we don't get bad public reviews
+  // from solvable problems.
+  const [reviewStep, setReviewStep] = useState<'rate' | 'feedback'>('rate');
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState('');
 
   const loadPrompts = useCallback(async () => {
     setLoading(true);
@@ -117,6 +123,35 @@ export default function App() {
   const handleDismissReview = async () => {
     await markReviewPromptShown();
     setShowReviewBanner(false);
+    setReviewStep('rate');
+    setFeedbackRating(0);
+    setFeedbackText('');
+  };
+
+  const handleRateStar = (stars: number) => {
+    setFeedbackRating(stars);
+    if (stars === 5) {
+      // Send happy users straight to the public review page.
+      chrome.tabs.create({
+        url: 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg/reviews',
+      });
+      void handleDismissReview();
+    } else {
+      // Capture critical feedback privately before they post a 1-2★ public review.
+      setReviewStep('feedback');
+    }
+  };
+
+  const handleSendFeedback = () => {
+    const subject = `Promptory feedback (${feedbackRating}★)`;
+    const body = feedbackText.trim() || '(no message)';
+    chrome.tabs.create({
+      url: `mailto:info@promptory.chat?subject=${encodeURIComponent(
+        subject,
+      )}&body=${encodeURIComponent(body)}`,
+    });
+    void handleDismissReview();
+    toast('Thanks — feedback sent', 'success');
   };
 
   // Paste prompt text into the active AI tool's input field.
@@ -253,30 +288,64 @@ export default function App() {
         </div>
       </header>
 
-      {showReviewBanner && (
+      {showReviewBanner && reviewStep === 'rate' && (
         <div className="mx-3 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
           <p className="text-xs font-medium text-amber-800">
             ⚡ You've saved 10 prompts!
           </p>
           <p className="mt-0.5 text-xs text-amber-700">
-            Enjoying Promptory? A quick review helps a lot.
+            How's Promptory so far?
           </p>
-          <div className="mt-2 flex gap-2">
-            <a
-              href="https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg/reviews"
-              target="_blank"
-              rel="noreferrer"
-              onClick={handleDismissReview}
-              className="flex items-center gap-1 rounded bg-amber-500 px-2 py-1 text-xs font-medium text-white hover:bg-amber-600"
-            >
-              <Star className="h-3 w-3" />
-              Leave a review
-            </a>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => handleRateStar(n)}
+                  className="rounded p-1 text-amber-500 transition-transform hover:scale-110 hover:text-amber-600"
+                  aria-label={`Rate ${n} star${n === 1 ? '' : 's'}`}
+                >
+                  <Star className="h-4 w-4 fill-current" />
+                </button>
+              ))}
+            </div>
             <button
               onClick={handleDismissReview}
               className="text-xs text-amber-600 hover:text-amber-800"
             >
               Maybe later
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showReviewBanner && reviewStep === 'feedback' && (
+        <div className="mx-3 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+          <p className="text-xs font-medium text-amber-800">
+            Sorry it's not perfect — what would make it better?
+          </p>
+          <p className="mt-0.5 text-xs text-amber-700">
+            Your feedback goes straight to the team.
+          </p>
+          <textarea
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+            placeholder="What could we improve?"
+            rows={3}
+            className="mt-2 w-full rounded border border-amber-300 bg-white px-2 py-1 text-xs text-gray-900 placeholder-gray-400 focus:border-amber-500 focus:outline-none"
+          />
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={handleSendFeedback}
+              className="rounded bg-amber-500 px-2 py-1 text-xs font-medium text-white hover:bg-amber-600"
+            >
+              Send feedback
+            </button>
+            <button
+              onClick={handleDismissReview}
+              className="text-xs text-amber-600 hover:text-amber-800"
+            >
+              Skip
             </button>
           </div>
         </div>
