@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Promptory — Google Ads API Tool Design Document</title>
+<style>
+  @page { size: A4; margin: 18mm 20mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.45;
+    font-size: 10pt;
+  }
+  h1 {
+    font-size: 17pt;
+    margin: 0 0 2pt 0;
+    color: #0f0f0f;
+    letter-spacing: -0.3pt;
+  }
+  h2 {
+    font-size: 11.5pt;
+    margin: 12pt 0 4pt 0;
+    color: #0f0f0f;
+    border-bottom: 0.6pt solid #e11d48;
+    padding-bottom: 2pt;
+  }
+  p { margin: 0 0 5pt 0; }
+  .meta {
+    color: #555;
+    font-size: 9pt;
+    margin-bottom: 10pt;
+    line-height: 1.5;
+  }
+  .meta strong { color: #0f0f0f; }
+  pre, code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+  }
+  pre {
+    background: #f6f6f6;
+    border: 0.6pt solid #e6e6e6;
+    border-radius: 3pt;
+    padding: 5pt 8pt;
+    margin: 4pt 0 6pt;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  code { background: #f0f0f0; padding: 0.5pt 3pt; border-radius: 2pt; }
+  ul { margin: 0 0 5pt 0; padding-left: 16pt; }
+  li { margin: 1pt 0; }
+  .diagram {
+    background: #fafafa;
+    border: 0.6pt solid #e6e6e6;
+    border-radius: 3pt;
+    padding: 6pt 10pt;
+    margin: 4pt 0 6pt;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 8pt;
+    line-height: 1.5;
+    white-space: pre;
+  }
+  .label-pill {
+    display: inline-block;
+    padding: 1.5pt 7pt;
+    border-radius: 100pt;
+    background: #fff1f4;
+    color: #e11d48;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.3pt;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="label-pill">Design Document</div>
+<h1>Promptory — Google Ads API Integration</h1>
+<p class="meta">
+  <strong>Product:</strong> Promptory — AI Prompt Directory for ChatGPT (Chrome Web Store extension) ·
+  <strong>MCC:</strong> 470-629-5146 ·
+  <strong>Contact:</strong> info@promptory.chat ·
+  <strong>Site:</strong> promptory.chat
+</p>
+
+<h2>1. Overview</h2>
+<p>
+  Promptory is a free Chrome extension distributed through the Chrome Web Store. We use Google Ads (Performance Max + Search) to drive installs. Because the Chrome Web Store is a third-party domain, we cannot place a Google Ads conversion tag on the install page — so we use the Google Ads API <code>ConversionUploadService.UploadClickConversions</code> endpoint to upload offline install conversions from our backend, attributed via the <code>gclid</code> we capture on a bridge page on our own domain.
+</p>
+
+<h2>2. Architecture</h2>
+<div class="diagram">[Google Ad click]
+   │
+   ▼
+[promptory.chat/go?gclid=…]   stores gclid in localStorage, redirects
+   │
+   ▼
+[chromewebstore.google.com/detail/&lt;ext-id&gt;]   user installs extension
+   │
+   ▼
+[chrome.runtime.onInstalled → opens promptory.chat/setting-up]
+   │
+   ▼
+[/setting-up reads gclid, POSTs to api.promptory.chat/v1/conversion]
+   │
+   ▼
+[Promptory backend (Cloudflare Workers) → Google Ads API]
+   │
+   ▼
+[ConversionUploadService.UploadClickConversions → conversion attributed]</div>
+
+<h2>3. API Usage</h2>
+<p>One endpoint, called server-side only:</p>
+<pre>POST googleads.googleapis.com/v17/customers/4706295146:uploadClickConversions
+{
+  "conversions": [{
+    "gclid": "Cj0K…",
+    "conversionAction": "customers/4706295146/conversionActions/&lt;id&gt;",
+    "conversionDateTime": "2026-05-02 15:42:01+03:00",
+    "conversionValue": 0.0,
+    "currencyCode": "USD"
+  }],
+  "partialFailure": true
+}</pre>
+<p>Expected volume: under 5,000 calls/day in the first 12 months. Other read-only calls (<code>ListAccessibleCustomers</code>, <code>GetConversionAction</code>) used at deploy time only.</p>
+
+<h2>4. Authentication &amp; Security</h2>
+<ul>
+  <li>OAuth 2.0 with one Google account owning the MCC; refresh token + developer token stored as Cloudflare Workers secrets.</li>
+  <li>Access token cached in Workers KV until expiry, refreshed on demand.</li>
+  <li><code>POST /v1/conversion</code> rate-limited (60 req/min/IP), CORS-restricted to <code>promptory.chat</code>, gclid format-validated before upload.</li>
+  <li>HTTPS everywhere. Raw gclids never logged; redacted hashes only.</li>
+</ul>
+
+<h2>5. Access Scope</h2>
+<p>
+  <strong>Internal only.</strong> Promptory's backend is the sole caller. End users never authenticate against Google Ads, never see API responses, and never trigger calls beyond the implicit conversion upload that happens server-side after install. No third-party access. Applying for <em>Basic Access</em>.
+</p>
+
+<h2>6. Privacy &amp; Retention</h2>
+<ul>
+  <li>No PII collected. gclid in localStorage is removed after successful upload (max 30 days).</li>
+  <li>Backend stores gclid + timestamp in Cloudflare D1 for 90 days for audit, then deletes.</li>
+  <li>Privacy policy: <code>https://promptory.chat/privacy</code>.</li>
+</ul>
+
+</body>
+</html>

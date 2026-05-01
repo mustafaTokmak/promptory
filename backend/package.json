@@ -1,0 +1,26 @@
+{
+  "name": "promptory-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "db:migrate:local": "wrangler d1 migrations apply promptory --local",
+    "db:migrate:prod": "wrangler d1 migrations apply promptory --remote",
+    "db:console:local": "wrangler d1 execute promptory --local --command",
+    "db:console:prod": "wrangler d1 execute promptory --remote --command",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "zod": "^3.24.0",
+    "@hono/zod-validator": "^0.4.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.100.0"
+  }
+}
