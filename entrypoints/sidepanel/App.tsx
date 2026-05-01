@@ -143,15 +143,15 @@ export default function App() {
   };
 
   const handleSendFeedback = () => {
-    const subject = `Promptory feedback (${feedbackRating}★)`;
-    const body = feedbackText.trim() || '(no message)';
-    chrome.tabs.create({
-      url: `mailto:info@promptory.chat?subject=${encodeURIComponent(
-        subject,
-      )}&body=${encodeURIComponent(body)}`,
+    // TODO: wire to backend once we have one — for now we just log it
+    // and dismiss. Mailto: gets ignored a lot and breaks the in-extension
+    // feel, so we keep this as a mock until the API exists.
+    console.log('[Promptory] Feedback received', {
+      rating: feedbackRating,
+      message: feedbackText.trim(),
     });
     void handleDismissReview();
-    toast('Thanks — feedback sent', 'success');
+    toast('Thanks for the feedback!', 'success');
   };
 
   // Paste prompt text into the active AI tool's input field.
