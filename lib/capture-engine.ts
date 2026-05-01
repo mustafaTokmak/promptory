@@ -106,7 +106,10 @@ export function startCaptureEngine(config: PlatformConfig): void {
     waitForStableContent(latestAssistant, config.debounceMs ?? 800)
       .then((responseText) => {
         if (!responseText) {
-          console.warn(`[Promptory] ${config.name}: empty response, skipping`);
+          // This is normal — happens when the assistant element is still
+          // showing a loading placeholder. We'll re-detect on the next
+          // mutation. Use debug so it doesn't pollute extension errors.
+          console.debug(`[Promptory] ${config.name}: empty response, will retry`);
           return;
         }
         lastProcessedSignature = signature;
