@@ -40,24 +40,38 @@ export function getVisibleText(element: Element): string {
 /**
  * Waits for an AI response to finish streaming by observing text changes.
  * Returns the final text when content is stable for `debounceMs`.
+ *
+ * Has a hard ceiling (`maxWaitMs`) so the capture engine never gets stuck
+ * if the page has continuous mutations (cursor blinks, hover reveals,
+ * code-execution badge updates) that keep resetting the debounce timer.
+ * Without this, ChatGPT capture would freeze: `processing` stays true,
+ * subsequent turns silently get skipped.
  */
 export function waitForStableContent(
   element: Element,
   debounceMs = 800,
+  maxWaitMs = 30_000,
 ): Promise<string> {
   return new Promise((resolve) => {
-    let timer: ReturnType<typeof setTimeout>;
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    let resolved = false;
     let lastText = getVisibleText(element);
+
+    const finish = () => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(debounceTimer);
+      clearTimeout(maxTimer);
+      observer.disconnect();
+      resolve(lastText);
+    };
 
     const observer = new MutationObserver(() => {
       const current = getVisibleText(element);
       if (current !== lastText) {
         lastText = current;
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          observer.disconnect();
-          resolve(lastText);
-        }, debounceMs);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(finish, debounceMs);
       }
     });
 
@@ -67,11 +81,10 @@ export function waitForStableContent(
       characterData: true,
     });
 
-    // Initial timer in case content is already complete
-    timer = setTimeout(() => {
-      observer.disconnect();
-      resolve(lastText);
-    }, debounceMs);
+    // Resolve once content has been stable for `debounceMs`...
+    debounceTimer = setTimeout(finish, debounceMs);
+    // ...but never wait longer than `maxWaitMs` total.
+    const maxTimer = setTimeout(finish, maxWaitMs);
   });
 }
 

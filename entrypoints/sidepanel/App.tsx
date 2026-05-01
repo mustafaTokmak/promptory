@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Clipboard, LayoutDashboard, Star, Trash2 } from 'lucide-react';
+import { Clipboard, LayoutDashboard, RefreshCw, Star, Trash2 } from 'lucide-react';
 import type { Prompt, AIPlatform } from '../../lib/types';
 import {
   getRecentPrompts,
@@ -194,6 +194,15 @@ export default function App() {
                 Clear
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => loadPrompts()}
+              title="Refresh"
+              aria-label="Refresh prompt list"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"

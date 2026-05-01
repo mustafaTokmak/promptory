@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Download, Trash2, Upload } from 'lucide-react';
+import { Download, RefreshCw, Trash2, Upload } from 'lucide-react';
 import type { Prompt, Folder } from '../../lib/types';
 import {
   getAllPrompts,
@@ -239,6 +239,15 @@ export default function App() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => loadPrompts()}
+              title="Refresh"
+              aria-label="Refresh prompt list"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             {totalCount > 0 && (
               <Button
                 variant="ghost"

@@ -103,20 +103,28 @@ export function startCaptureEngine(config: PlatformConfig): void {
     processing = true;
     console.log(`[Promptory] ${config.name}: new turn detected`);
 
-    waitForStableContent(latestAssistant, config.debounceMs ?? 800).then((responseText) => {
-      processing = false;
-      if (!responseText) {
-        console.warn(`[Promptory] ${config.name}: empty response, skipping`);
-        return;
-      }
-      lastProcessedSignature = signature;
-      lastProcessedTurn = turnNumber;
-      console.log(`[Promptory] ${config.name}: captured turn ${turnNumber}`, {
-        promptLen: promptText.length,
-        responseLen: responseText.length,
+    waitForStableContent(latestAssistant, config.debounceMs ?? 800)
+      .then((responseText) => {
+        if (!responseText) {
+          console.warn(`[Promptory] ${config.name}: empty response, skipping`);
+          return;
+        }
+        lastProcessedSignature = signature;
+        lastProcessedTurn = turnNumber;
+        console.log(`[Promptory] ${config.name}: captured turn ${turnNumber}`, {
+          promptLen: promptText.length,
+          responseLen: responseText.length,
+        });
+        sendCapture(config.id, promptText, responseText, getThreadId());
+      })
+      .catch((err) => {
+        console.error(`[Promptory] ${config.name}: capture error`, err);
+      })
+      .finally(() => {
+        // Always release the lock — otherwise a single stuck capture
+        // would silently freeze every subsequent turn on the page.
+        processing = false;
       });
-      sendCapture(config.id, promptText, responseText, getThreadId());
-    });
   };
 
   const observer = new MutationObserver(() => {
