@@ -26,8 +26,7 @@ interface FolderSidebarProps {
   onFoldersChanged: () => void;
 }
 
-// Perplexity intentionally excluded — not currently captured.
-const platforms: AIPlatform[] = ['chatgpt', 'gemini', 'claude', 'grok', 'copilot'];
+const platforms: AIPlatform[] = ['chatgpt', 'gemini', 'claude', 'perplexity', 'grok', 'copilot'];
 
 export function FolderSidebar({
   folders,

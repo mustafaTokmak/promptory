@@ -1,4 +1,4 @@
-import { waitForStableContent, sendCapture, getThreadId } from './capture';
+import { waitForStableContent, sendCapture, getThreadId, getVisibleText } from './capture';
 import type { AIPlatform } from './types';
 
 /**
@@ -97,7 +97,7 @@ export function startCaptureEngine(config: PlatformConfig): void {
     const signature = signatureFor(latestAssistant);
     if (signature && signature === lastProcessedSignature) return;
 
-    const promptText = latestUser.textContent?.trim() ?? '';
+    const promptText = getVisibleText(latestUser);
     if (!promptText) return;
 
     processing = true;

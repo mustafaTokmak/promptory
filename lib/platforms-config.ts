@@ -48,11 +48,18 @@ export const claudeConfig: PlatformConfig = {
   matches: ['https://claude.ai/*'],
   userSelectors: [
     '[data-testid="user-message"]',
-    '.font-user-message',
+    // ~= matches the WHOLE class name as a token, not a substring.
+    // [class*=...] would also match font-user-message-body etc.
+    '[class~="!font-user-message"]',
+    '[class~="font-user-message"]',
   ],
   assistantSelectors: [
     '[data-testid="assistant-message"]',
-    '.font-claude-message',
+    // Outer container only — `[class*=...]` wrongly also matched the
+    // inner `.font-claude-response-body` paragraph elements, causing
+    // capture to grab only the last paragraph.
+    '[class~="font-claude-response"]',
+    '[class~="font-claude-message"]', // legacy fallback
   ],
 };
 
@@ -85,10 +92,15 @@ export const grokConfig: PlatformConfig = {
     '.message-bubble.user',
   ],
   assistantSelectors: [
+    // Most specific — only the rendered markdown response, excludes the
+    // "View code executions" button and other UI chrome at the bottom of
+    // [data-testid="assistant-message"] which would otherwise leak text
+    // like "Executing code1 line" into the captured response.
+    '.response-content-markdown',
+    '[class*="response-content"]',
     '[data-testid="assistant-message"]',
     '.assistant-message',
     '[class*="assistant-message"]',
-    '[class*="response-content"]',
     '.message-bubble.assistant',
   ],
   debounceMs: 1000, // Grok streams more slowly on x.com
@@ -99,16 +111,19 @@ export const copilotConfig: PlatformConfig = {
   name: 'Copilot',
   matches: ['https://copilot.microsoft.com/*'],
   userSelectors: [
+    // Current Copilot (2026): user message container has role="article" with id ending in "-user-message"
+    '[role="article"][id$="-user-message"]',
+    // Legacy fallbacks
     '[data-testid="user-message"]',
     '[data-author="user"]',
-    '.user-message',
     'cib-user-message',
   ],
   assistantSelectors: [
     '[data-testid="ai-message"]',
+    '[data-content="ai-message"]',
+    // Legacy fallbacks
     '[data-author="bot"]',
     '[data-author="assistant"]',
-    '.ai-message',
     'cib-message[source="bot"]',
   ],
 };

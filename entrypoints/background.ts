@@ -20,6 +20,11 @@ export default defineBackground(() => {
           if (!id) return;
           console.log('[Promptory] Saved with id', id);
 
+          // Broadcast so any open dashboard/sidepanel pages refresh immediately
+          chrome.runtime
+            .sendMessage({ type: 'PROMPT_SAVED', payload: { id } })
+            .catch(() => {/* no listeners — fine */});
+
           const [count, settings] = await Promise.all([
             getPromptCount(),
             getSettings(),

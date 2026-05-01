@@ -90,17 +90,15 @@ export default function App() {
   }, [loadPrompts, search]);
 
   // Live-update when captures happen in other tabs (user on dashboard,
-  // chatting in ChatGPT tab should not require manual refresh).
+  // chatting in ChatGPT tab should not require manual refresh). The write
+  // happens in the background service worker, so we listen for the broadcast
+  // message it sends after each save.
   useEffect(() => {
-    const handleChange = () => loadPrompts();
-    db.prompts.hook('creating', handleChange);
-    db.prompts.hook('deleting', handleChange);
-    db.prompts.hook('updating', handleChange);
-    return () => {
-      db.prompts.hook('creating').unsubscribe(handleChange);
-      db.prompts.hook('deleting').unsubscribe(handleChange);
-      db.prompts.hook('updating').unsubscribe(handleChange);
+    const listener = (message: { type?: string }) => {
+      if (message?.type === 'PROMPT_SAVED') loadPrompts();
     };
+    chrome.runtime.onMessage.addListener(listener);
+    return () => chrome.runtime.onMessage.removeListener(listener);
   }, [loadPrompts]);
 
   // ── Bulk actions ──
@@ -134,6 +132,7 @@ export default function App() {
     const count = totalCount;
     await deleteAllPrompts();
     setSelected(new Set());
+    await loadPrompts();
     toast(`Deleted ${count} prompts`, 'success');
   };
 
@@ -505,7 +504,7 @@ function EmptyState({
   } else {
     title = 'No prompts saved yet';
     body =
-      'Start chatting with ChatGPT, Gemini, Claude, Grok, or Copilot — your prompts will be saved automatically.';
+      'Start chatting with ChatGPT, Gemini, Claude, Perplexity, Grok, or Copilot — your prompts will be saved automatically.';
   }
 
   return (

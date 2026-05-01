@@ -95,25 +95,15 @@ export default function App() {
     const handleMessage = (message: { type: string }) => {
       if (message.type === 'SHOW_REVIEW_PROMPT') {
         checkReviewPrompt();
+      } else if (message.type === 'PROMPT_SAVED') {
+        // Live-update: refresh whenever the background saves a new prompt.
+        // Dexie hooks don't fire across contexts, so this is the bridge.
+        loadPrompts();
       }
     };
     chrome.runtime.onMessage.addListener(handleMessage);
     return () => chrome.runtime.onMessage.removeListener(handleMessage);
-  }, [checkReviewPrompt]);
-
-  // Live-update when prompts get saved elsewhere (user chatting on ChatGPT
-  // should see the side panel refresh without manual reload).
-  useEffect(() => {
-    const handleChange = () => loadPrompts();
-    db.prompts.hook('creating', handleChange);
-    db.prompts.hook('deleting', handleChange);
-    db.prompts.hook('updating', handleChange);
-    return () => {
-      db.prompts.hook('creating').unsubscribe(handleChange);
-      db.prompts.hook('deleting').unsubscribe(handleChange);
-      db.prompts.hook('updating').unsubscribe(handleChange);
-    };
-  }, [loadPrompts]);
+  }, [checkReviewPrompt, loadPrompts]);
 
   const openDashboard = () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('/dashboard.html') });

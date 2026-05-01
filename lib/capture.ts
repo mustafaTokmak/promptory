@@ -14,6 +14,30 @@ export interface PlatformSelectors {
 }
 
 /**
+ * Strip screen-reader-only helper text (e.g. "You said", "Copilot said")
+ * that platforms inject for a11y. Without this, prompts come through as
+ * "You said test internet speed".
+ *
+ * Covers the common a11y patterns:
+ *   - Tailwind/Bootstrap: `.sr-only`
+ *   - Angular Material: `.cdk-visually-hidden`
+ *   - Generic: any class containing "visually-hidden" or "screen-reader"
+ *
+ * Note: we deliberately don't strip [aria-hidden="true"] — some platforms
+ * mark their streaming response containers as aria-hidden until the response
+ * stabilizes, which would cause us to capture an empty string.
+ */
+export function getVisibleText(element: Element): string {
+  const clone = element.cloneNode(true) as Element;
+  clone
+    .querySelectorAll(
+      '.sr-only, [class*="sr-only"], [class*="visually-hidden"], [class*="screen-reader"]',
+    )
+    .forEach((e) => e.remove());
+  return clone.textContent?.trim().replace(/\s+/g, ' ') ?? '';
+}
+
+/**
  * Waits for an AI response to finish streaming by observing text changes.
  * Returns the final text when content is stable for `debounceMs`.
  */
@@ -23,16 +47,16 @@ export function waitForStableContent(
 ): Promise<string> {
   return new Promise((resolve) => {
     let timer: ReturnType<typeof setTimeout>;
-    let lastText = element.textContent ?? '';
+    let lastText = getVisibleText(element);
 
     const observer = new MutationObserver(() => {
-      const current = element.textContent ?? '';
+      const current = getVisibleText(element);
       if (current !== lastText) {
         lastText = current;
         clearTimeout(timer);
         timer = setTimeout(() => {
           observer.disconnect();
-          resolve(lastText.trim());
+          resolve(lastText);
         }, debounceMs);
       }
     });
@@ -46,7 +70,7 @@ export function waitForStableContent(
     // Initial timer in case content is already complete
     timer = setTimeout(() => {
       observer.disconnect();
-      resolve(lastText.trim());
+      resolve(lastText);
     }, debounceMs);
   });
 }

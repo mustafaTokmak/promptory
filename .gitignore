@@ -27,3 +27,8 @@ screenshots/
 site/dist/
 site/node_modules/
 site/.astro/
+
+# Test artifacts
+test-results/
+playwright-report/
+.smoke-profile/
