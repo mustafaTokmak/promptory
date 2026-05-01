@@ -22,3 +22,8 @@ npm-debug.log*
 
 # Screenshots (large binaries — keep locally)
 screenshots/
+
+# Astro
+site/dist/
+site/node_modules/
+site/.astro/

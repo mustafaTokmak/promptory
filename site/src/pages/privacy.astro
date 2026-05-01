@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Privacy Policy — Promptory" description="Promptory privacy policy — plain English, no surprises.">
+
+  <div class="page-hero">
+    <div class="container">
+      <div class="page-label">Legal</div>
+      <h1>Privacy Policy</h1>
+      <p class="meta">Last updated: May 1, 2026</p>
+    </div>
+  </div>
+
+  <div class="content">
+    {[
+      {
+        icon: '📦',
+        title: 'Data we collect',
+        body: 'Promptory collects the prompts you send to AI tools, along with the AI\'s response and basic metadata (platform, timestamp). Your data stays on your device unless you explicitly opt in to sharing.',
+      },
+      {
+        icon: '🌐',
+        title: 'Community & sharing',
+        body: 'The Community feature is strictly opt-in. If you choose to participate, prompts are automatically screened to remove personal information before being shared. You can withdraw at any time from within the extension.',
+      },
+      {
+        icon: '🤝',
+        title: 'Third parties',
+        body: 'If you opt in, anonymized, de-identified data may be shared with or sold to third parties to improve our services. Your personal identity is never attached to any data we share. If you don\'t opt in, your data never leaves your device.',
+      },
+      {
+        icon: '⚙️',
+        title: 'Your controls',
+        body: 'You can export your data as JSON or CSV anytime, or delete everything with "Clear all". Uninstalling the extension removes all your data. Community consent can be withdrawn from the Community tab at any time.',
+      },
+    ].map(block => (
+      <div class="block">
+        <div class="block-icon">{block.icon}</div>
+        <div class="block-body">
+          <h2>{block.title}</h2>
+          <p>{block.body}</p>
+        </div>
+      </div>
+    ))}
+
+    <div class="block">
+      <div class="block-icon">✉️</div>
+      <div class="block-body">
+        <h2>Contact</h2>
+        <p>Questions? Reach us at <a href="mailto:info@promptory.chat">info@promptory.chat</a>. We may update this policy as the product evolves — changes will be reflected by the date above.</p>
+      </div>
+    </div>
+  </div>
+
+</Layout>
+
+<style>
+  .content { max-width: 680px; margin: 0 auto; padding: 52px 24px 96px; }
+
+  .block { display: flex; gap: 20px; padding: 28px 0; border-bottom: 1px solid var(--border); }
+  .block:last-child { border-bottom: none; }
+  .block-icon { width: 40px; height: 40px; border-radius: 10px; background: #fff1f2; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .block-body h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .block-body p { font-size: 15px; color: #444; line-height: 1.75; }
+  .block-body a { color: var(--brand); }
+  .block-body a:hover { text-decoration: underline; }
+</style>

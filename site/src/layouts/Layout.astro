@@ -1,0 +1,84 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title,
+  description = 'Automatically save every prompt you send to ChatGPT, Claude, Gemini and more. Search, tag, and reuse them instantly.',
+  ogImage = '/assets/og.png',
+} = Astro.props;
+
+const CWS_URL = 'https://chromewebstore.google.com/detail/YOUR_EXTENSION_ID';
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={`https://promptory.chat${ogImage}`} />
+  <meta property="og:url" content="https://promptory.chat" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content={`https://promptory.chat${ogImage}`} />
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo-row">
+        <div class="logo-mark">P</div>
+        <span class="logo-name">Promptory</span>
+      </a>
+      <div class="nav-links">
+        <a href="/#features" class="nav-hide">Features</a>
+        <a href="/#how-it-works" class="nav-hide">How it works</a>
+        <a href="/about">About</a>
+        <a href="/privacy">Privacy</a>
+        <a href={CWS_URL} target="_blank" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7.5" stroke="white" stroke-opacity=".5"/>
+            <circle cx="8" cy="8" r="3" fill="white"/>
+          </svg>
+          Add to Chrome
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page content -->
+  <slot />
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo-row">
+        <div class="logo-mark" style="width:28px;height:28px;font-size:16px;border-radius:7px;">P</div>
+        <span style="font-size:14px;font-weight:700;">Promptory</span>
+      </a>
+      <div class="footer-links">
+        <a href="/about">About</a>
+        <a href="/privacy">Privacy</a>
+        <a href={CWS_URL} target="_blank">Chrome Web Store</a>
+      </div>
+      <span class="footer-copy">© {new Date().getFullYear()} Promptory</span>
+    </div>
+  </footer>
+
+</body>
+</html>

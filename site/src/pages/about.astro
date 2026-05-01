@@ -1,0 +1,110 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const CWS_URL = 'https://chromewebstore.google.com/detail/YOUR_EXTENSION_ID';
+---
+
+<Layout title="About — Promptory" description="Why we built Promptory — a private, local-first AI prompt manager for power users.">
+
+  <div class="page-hero">
+    <div class="container">
+      <div class="page-label">About</div>
+      <h1>Built for people who take AI seriously.</h1>
+      <p class="lead">Promptory started as a personal frustration — and turned into the tool we wished existed.</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="story">
+      <p>
+        If you use AI tools every day, you know the feeling: you write a brilliant prompt,
+        get a great result, close the tab — and spend the next week trying to remember
+        how you phrased it. You rewrite it from scratch. It's never quite as good.
+      </p>
+      <p>
+        That's the problem Promptory solves. It runs quietly in the background, capturing
+        every prompt you send across ChatGPT, Claude, Gemini, Perplexity, Grok, and Copilot.
+        No copy-pasting. No manual saving. Just open the side panel when you need something,
+        and it's there.
+      </p>
+      <p>
+        We built Promptory with one non-negotiable: <strong>your data stays on your device.</strong>
+        Everything is stored in your browser's local storage. We can't read your prompts — they're yours.
+      </p>
+    </div>
+
+    <h2>What we believe</h2>
+    <div class="values">
+      {[
+        { icon: '🔒', title: 'Privacy is not a feature', body: 'Local-first storage isn\'t a marketing claim — it\'s a technical constraint we chose. We couldn\'t collect your data if we wanted to.' },
+        { icon: '⚡', title: 'Zero friction', body: 'Tools that require manual effort don\'t get used. Promptory is invisible until you need it — then it\'s instantly there.' },
+        { icon: '🎯', title: 'Do one thing well', body: 'Promptory saves, organizes, and surfaces your prompts. We won\'t bloat it with social feeds or prompt marketplaces.' },
+        { icon: '🌐', title: 'Platform agnostic', body: 'We don\'t pick favorites. Promptory works across all major AI platforms, equally.' },
+      ].map(v => (
+        <div class="value-card">
+          <div class="icon">{v.icon}</div>
+          <h3>{v.title}</h3>
+          <p>{v.body}</p>
+        </div>
+      ))}
+    </div>
+
+    <h2>The roadmap</h2>
+    <div class="story">
+      <p>Promptory v1 is focused on doing the core job reliably. What's next:</p>
+      <ul>
+        <li>Folder organization — group prompts into projects or workflows</li>
+        <li>Browser sync — optional encrypted sync across your own devices</li>
+        <li>Community library — browse high-quality prompts shared by the community (opt-in)</li>
+        <li>Firefox support</li>
+      </ul>
+      <p>Have a feature request? Email <a href="mailto:info@promptory.chat">info@promptory.chat</a> — we read every message.</p>
+    </div>
+
+    <div class="cta-box">
+      <h2>Try it for free</h2>
+      <p>No account. No setup. Works in 30 seconds.</p>
+      <a href={CWS_URL} target="_blank" class="btn-white">Add to Chrome</a>
+    </div>
+
+  </div>
+
+</Layout>
+
+<style>
+  .page-hero .lead { font-size: 18px; color: var(--muted); line-height: 1.7; max-width: 580px; margin-top: 12px; }
+
+  .content { max-width: 760px; margin: 0 auto; padding: 64px 24px 96px; }
+
+  .story p { font-size: 16px; color: #333; line-height: 1.85; margin-bottom: 20px; }
+  .story ul { margin: 12px 0 20px 20px; }
+  .story li { font-size: 15px; color: #333; line-height: 1.75; margin-bottom: 8px; }
+  .story a { color: var(--brand); }
+  .story a:hover { text-decoration: underline; }
+  .story strong { font-weight: 600; color: var(--text); }
+
+  h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 48px 0 20px; }
+
+  .values { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .value-card { border: 1px solid var(--border); border-radius: 12px; padding: 24px; background: var(--bg-soft); }
+  .value-card .icon { font-size: 28px; margin-bottom: 12px; }
+  .value-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .value-card p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  .cta-box {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-d) 100%);
+    border-radius: 16px; padding: 40px; text-align: center; margin-top: 64px; color: #fff;
+  }
+  .cta-box h2 { color: #fff; margin: 0 0 10px; font-size: 24px; letter-spacing: -0.5px; }
+  .cta-box p { color: rgba(255,255,255,0.82); font-size: 15px; margin-bottom: 24px; }
+  .btn-white {
+    background: #fff; color: var(--brand);
+    padding: 12px 24px; border-radius: 9px;
+    font-size: 14px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    transition: transform .15s;
+  }
+  .btn-white:hover { transform: translateY(-1px); }
+</style>
