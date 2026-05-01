@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output
+.output/
+.wxt/
+
+# Distribution
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Screenshots (large binaries — keep locally)
+screenshots/

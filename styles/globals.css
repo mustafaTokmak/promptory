@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+/**
+ * Design tokens — Tailwind v4 @theme directive.
+ *
+ * Anything declared here becomes a utility class automatically:
+ *   --color-brand-600  →  bg-brand-600, text-brand-600, ring-brand-600/40, etc.
+ *
+ * Keep this list tight. Tokens here are the brand contract; everything else
+ * uses Tailwind defaults.
+ */
+@theme {
+  /* Brand: rose. Chosen to avoid clashing with the 5 platform colors
+     (ChatGPT green, Gemini blue, Claude orange, Grok black, Copilot blue). */
+  --color-brand-50: #fff1f2;
+  --color-brand-100: #ffe4e6;
+  --color-brand-200: #fecdd3;
+  --color-brand-300: #fda4af;
+  --color-brand-400: #fb7185;
+  --color-brand-500: #f43f5e;
+  --color-brand-600: #e11d48; /* primary — buttons, logo, active chips */
+  --color-brand-700: #be123c;
+  --color-brand-800: #9f1239;
+  --color-brand-900: #881337;
+
+  /* Density tuning. Extension panels are ~320px wide; defaults feel roomy. */
+  --radius-card: 0.5rem;
+}
+
+/* Base — tightens up the browser defaults for extension contexts. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue',
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scrollbars: subtle, not macOS-native-heavy. */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.18);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(0 0 0 / 0.32);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Global focus ring — brand-colored, visible but not harsh.
+   Components can still override with their own focus styles. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 3px;
+}

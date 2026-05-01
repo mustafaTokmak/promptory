@@ -1,0 +1,74 @@
+══════════════════════════════════════════════
+ PROMPTORY — CWS STORE LISTING COPY
+══════════════════════════════════════════════
+
+SHORT DESCRIPTION (132 chars max)
+──────────────────────────────────
+Auto-save your AI prompts from ChatGPT, Claude, Gemini & more. Search, tag, and reuse them in one click.
+
+
+FULL DESCRIPTION (paste into CWS Developer Dashboard)
+──────────────────────────────────────────────────────
+Never lose a great prompt again.
+
+Promptory automatically captures every prompt you send to your favorite AI tools and stores it privately on your device. Search your entire history, filter by platform, tag your best prompts, and paste them back into any AI tool in one click.
+
+🔒 100% LOCAL & PRIVATE
+Your prompts never leave your browser. Everything is stored in local IndexedDB — no accounts, no cloud sync, no servers receiving your data. We literally can't read your prompts.
+
+⚡ WORKS AUTOMATICALLY
+No buttons to click, no copy-pasting. Promptory runs silently in the background and captures prompts as you type on ChatGPT, Claude, Gemini, Perplexity, Grok, and Copilot.
+
+🔍 INSTANT SEARCH
+Full-text search across all your saved prompts and responses. Find that perfect prompt from three weeks ago in under a second.
+
+🏷️ TAGS & FILTERS
+Auto-tagged by platform. Add your own tags to organize by project, client, or topic. Filter by platform with one click.
+
+📋 ONE-CLICK PASTE
+Open the side panel, find your prompt, hit Paste — and it's injected directly into the active AI tool's input field. No clipboard needed.
+
+📤 EXPORT YOUR LIBRARY
+Download your entire prompt library as JSON or CSV at any time. Your data is always portable.
+
+📊 FULL DASHBOARD
+Open the library view for a full-width browsing experience with search, platform filters, favorites, and bulk actions.
+
+── SUPPORTED PLATFORMS ──
+✓ ChatGPT (chatgpt.com)
+✓ Claude (claude.ai)
+✓ Gemini (gemini.google.com)
+✓ Perplexity (perplexity.ai)
+✓ Grok (grok.com)
+✓ Microsoft Copilot (copilot.microsoft.com)
+
+── PERMISSIONS ──
+• storage — saves your prompts locally
+• sidePanel — displays the side panel UI
+• scripting — detects prompts on AI pages and pastes them back
+• Host permissions for the 6 supported AI platforms only
+
+Promptory is free with no account required. Install and start building your library immediately.
+
+Privacy policy: https://promptory.chat/privacy
+
+
+══════════════════════════════════════════════
+ CWS CATEGORY & TAGS
+══════════════════════════════════════════════
+
+Primary Category:  Productivity
+Secondary Category: Tools
+
+Tags (pick up to 5 in CWS):
+  productivity, ai, chatgpt, prompt, notes
+
+
+══════════════════════════════════════════════
+ POST-SUBMISSION CHECKLIST
+══════════════════════════════════════════════
+
+After CWS assigns your extension ID, update these:
+  1. sidepanel/App.tsx line 267 — replace YOUR_EXTENSION_ID
+  2. site/index.html — replace all YOUR_EXTENSION_ID instances (×3)
+  3. site/about/index.html — replace YOUR_EXTENSION_ID (×1)
