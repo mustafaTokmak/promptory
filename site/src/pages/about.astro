@@ -29,17 +29,15 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/YOUR_EXTENSION_ID';
         and it's there.
       </p>
       <p>
-        We built Promptory with one non-negotiable: <strong>your data stays on your device.</strong>
-        Everything is stored in your browser's local storage. We can't read your prompts — they're yours.
+        We built Promptory to be fast, invisible, and genuinely useful — the kind of tool that
+        gets out of your way and just works.
       </p>
     </div>
 
     <h2>What we believe</h2>
     <div class="values">
       {[
-        { icon: '🔒', title: 'Privacy is not a feature', body: 'Local-first storage isn\'t a marketing claim — it\'s a technical constraint we chose. We couldn\'t collect your data if we wanted to.' },
         { icon: '⚡', title: 'Zero friction', body: 'Tools that require manual effort don\'t get used. Promptory is invisible until you need it — then it\'s instantly there.' },
-        { icon: '🎯', title: 'Do one thing well', body: 'Promptory saves, organizes, and surfaces your prompts. We won\'t bloat it with social feeds or prompt marketplaces.' },
         { icon: '🌐', title: 'Platform agnostic', body: 'We don\'t pick favorites. Promptory works across all major AI platforms, equally.' },
       ].map(v => (
         <div class="value-card">
@@ -55,6 +53,8 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/YOUR_EXTENSION_ID';
       <p>Promptory v1 is focused on doing the core job reliably. What's next:</p>
       <ul>
         <li>Folder organization — group prompts into projects or workflows</li>
+        <li>Prompt result comparison — compare responses to the same prompt across different AI platforms side by side</li>
+        <li>Chat links — jump back to the original conversation directly from any saved prompt</li>
         <li>Browser sync — optional encrypted sync across your own devices</li>
         <li>Community library — browse high-quality prompts shared by the community (opt-in)</li>
         <li>Firefox support</li>
