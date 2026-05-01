@@ -67,13 +67,18 @@ export const perplexityConfig: PlatformConfig = {
   id: 'perplexity',
   name: 'Perplexity',
   matches: ['https://www.perplexity.ai/*'],
-  // Perplexity has many markdown containers (citations, related questions,
-  // sources, follow-up suggestions). Match ONLY the top-level query/answer.
+  // Perplexity 2026 DOM:
+  //   user prompt = <h1 class="group/query ...">
+  //   answer body = <div id="markdown-content-N"> (incrementing per turn)
+  // The legacy [data-testid=...] selectors no longer match.
   userSelectors: [
-    '[data-testid="query-text"]',
+    'h1[class*="group/query"]',
+    '[class*="group/query"]',
+    '[data-testid="query-text"]', // legacy fallback
   ],
   assistantSelectors: [
-    '[data-testid="answer-text"]',
+    '[id^="markdown-content-"]',
+    '[data-testid="answer-text"]', // legacy fallback
   ],
   debounceMs: 2000, // Perplexity streams sources/citations after the main answer
 };
