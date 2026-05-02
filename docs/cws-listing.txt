@@ -1,32 +1,40 @@
 ══════════════════════════════════════════════
- PROMPTORY — CWS STORE LISTING COPY
+ PROMPTORY — CWS STORE LISTING COPY (v2)
 ══════════════════════════════════════════════
+
+CHANGE LOG
+──────────
+v2 (May 2 2026): rewrote to mention each platform name exactly once.
+v1 was rejected by CWS for "Keyword Spam" (Yellow Argon) because the
+six platform names appeared twice — once in HOW IT WORKS prose and
+again in a WORKS WITH bullet list.
+
 
 SHORT DESCRIPTION (132 chars max)
 ──────────────────────────────────
-Auto-save your AI prompts from ChatGPT, Claude, Gemini & more. Search, tag, and reuse them in one click.
+Auto-save your AI prompts. Search, tag, reuse. Works on every major chatbot, runs locally, no account required.
 
 
 FULL DESCRIPTION (paste into CWS Developer Dashboard)
 ──────────────────────────────────────────────────────
 Never lose a great prompt again.
 
-Promptory automatically captures every prompt you send to your favorite AI tools and stores it privately on your device. Search your entire history, filter by platform, tag your best prompts, and paste them back into any AI tool in one click.
+Promptory captures every prompt you send to popular AI chatbots — ChatGPT, Claude, Gemini, Perplexity, Grok, and Microsoft Copilot — and stores them privately on your device. Open the side panel, search your entire history, and paste the perfect prompt back into the active tool with one click.
 
 🔒 100% LOCAL & PRIVATE
 Your prompts never leave your browser. Everything is stored in local IndexedDB — no accounts, no cloud sync, no servers receiving your data. We literally can't read your prompts.
 
 ⚡ WORKS AUTOMATICALLY
-No buttons to click, no copy-pasting. Promptory runs silently in the background and captures prompts as you type on ChatGPT, Claude, Gemini, Perplexity, Grok, and Copilot.
+No buttons to click, no copy-pasting. Promptory runs silently in the background and captures prompts as you type.
 
 🔍 INSTANT SEARCH
 Full-text search across all your saved prompts and responses. Find that perfect prompt from three weeks ago in under a second.
 
 🏷️ TAGS & FILTERS
-Auto-tagged by platform. Add your own tags to organize by project, client, or topic. Filter by platform with one click.
+Auto-tagged by platform. Add your own tags to organize by project, client, or topic. Filter with one click.
 
 📋 ONE-CLICK PASTE
-Open the side panel, find your prompt, hit Paste — and it's injected directly into the active AI tool's input field. No clipboard needed.
+Open the side panel, find your prompt, hit Paste — and it's injected directly into the active tool's input field. No clipboard needed.
 
 📤 EXPORT YOUR LIBRARY
 Download your entire prompt library as JSON or CSV at any time. Your data is always portable.
@@ -34,23 +42,34 @@ Download your entire prompt library as JSON or CSV at any time. Your data is alw
 📊 FULL DASHBOARD
 Open the library view for a full-width browsing experience with search, platform filters, favorites, and bulk actions.
 
-── SUPPORTED PLATFORMS ──
-✓ ChatGPT (chatgpt.com)
-✓ Claude (claude.ai)
-✓ Gemini (gemini.google.com)
-✓ Perplexity (perplexity.ai)
-✓ Grok (grok.com)
-✓ Microsoft Copilot (copilot.microsoft.com)
-
 ── PERMISSIONS ──
-• storage — saves your prompts locally
+• storage — saves prompts locally
 • sidePanel — displays the side panel UI
-• scripting — detects prompts on AI pages and pastes them back
-• Host permissions for the 6 supported AI platforms only
+• scripting — detects prompts and pastes them back
+• Host permissions limited to the supported AI platforms only
 
-Promptory is free with no account required. Install and start building your library immediately.
+Promptory is free with no account required.
 
 Privacy policy: https://promptory.chat/privacy
+
+
+══════════════════════════════════════════════
+ WHAT WAS FLAGGED (v1 → DON'T DO)
+══════════════════════════════════════════════
+
+Original v1 description had:
+  - Body: "Every time you send a message to ChatGPT, Claude, Gemini,
+    Perplexity, Grok, or Copilot, Promptory quietly saves it..."
+  - Footer: "── SUPPORTED PLATFORMS ──
+            ✓ ChatGPT (chatgpt.com)
+            ✓ Claude (claude.ai)  ...etc"
+
+Both blocks listed the same six brand names. CWS interpreted the
+duplication as keyword stuffing and cited it under the
+"misleading / excessive metadata" policy.
+
+In v2, each brand is named exactly once (in the opening paragraph)
+and the SUPPORTED PLATFORMS bullet list is removed entirely.
 
 
 ══════════════════════════════════════════════
@@ -61,14 +80,15 @@ Primary Category:  Productivity
 Secondary Category: Tools
 
 Tags (pick up to 5 in CWS):
-  productivity, ai, chatgpt, prompt, notes
+  productivity, ai, prompt, notes, history
 
 
 ══════════════════════════════════════════════
- POST-SUBMISSION CHECKLIST
+ ALSO REVIEW FOR EDGE / FIREFOX
 ══════════════════════════════════════════════
 
-After CWS assigns your extension ID, update these:
-  1. sidepanel/App.tsx line 267 — replace YOUR_EXTENSION_ID
-  2. site/index.html — replace all YOUR_EXTENSION_ID instances (×3)
-  3. site/about/index.html — replace YOUR_EXTENSION_ID (×1)
+If the same flagged copy was used for Edge Add-ons or Mozilla AMO
+listings, update those before they hit a similar rejection.
+
+Edge: Microsoft Partner Center → Promptory → Properties → Description
+AMO:  addons.mozilla.org/developers → Promptory → Edit listing
