@@ -47,21 +47,22 @@ export default defineConfig({
             '128': 'icon/128.png',
           },
         },
-        browser_specific_settings: {
-          gecko: {
-            id: 'promptory@promptory.chat',
-            strict_min_version: '128.0',
-          },
-        },
-        // Firefox 137+ requires explicit data-collection disclosure on AMO.
+        // Firefox 137+ requires explicit data-collection disclosure on AMO,
+        // and AMO expects the property nested INSIDE gecko (not at the
+        // manifest root).
         //   websiteContent          — we capture prompt + response text from
         //                             ChatGPT/Claude/etc, stored locally only.
         //   technicalAndInteraction — opt-in feedback POST to api.promptory.chat
         //                             when the user explicitly clicks Send Feedback.
-        // Everything else is "none" — no PII, location, etc.
-        data_collection_permissions: {
-          required: ['websiteContent'],
-          optional: ['technicalAndInteraction'],
+        browser_specific_settings: {
+          gecko: {
+            id: 'promptory@promptory.chat',
+            strict_min_version: '128.0',
+            data_collection_permissions: {
+              required: ['websiteContent'],
+              optional: ['technicalAndInteraction'],
+            },
+          },
         },
       } as Record<string, unknown>;
     }
