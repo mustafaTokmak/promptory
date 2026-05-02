@@ -18,6 +18,7 @@ export default defineConfig({
       'https://grok.com/*',
       'https://x.com/*',
       'https://copilot.microsoft.com/*',
+      'https://promptory.chat/*',
     ],
   },
   vite: () => ({

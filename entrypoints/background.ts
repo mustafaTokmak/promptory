@@ -1,6 +1,8 @@
 import { addPrompt, getPromptCount, markReviewPromptShown, getSettings } from '../lib/storage';
 import type { CaptureMessage } from '../lib/types';
 
+const API_BASE = 'https://api.promptory.chat';
+
 export default defineBackground(() => {
   console.log('[Promptory] Background service worker started');
 
@@ -23,8 +25,43 @@ export default defineBackground(() => {
     }
   });
 
-  chrome.runtime.onMessage.addListener((message: CaptureMessage) => {
-    if (message.type === 'PROMPT_CAPTURED') {
+  chrome.runtime.onMessage.addListener((message: any, _sender, sendResponse) => {
+    // gclid forwarded from the content script running on promptory.chat —
+    // ship it to our backend which uploads the offline conversion to Google Ads.
+    if (message?.type === 'GCLID_CAPTURED') {
+      const { gclid, capturedAt } = message.payload ?? {};
+      if (!gclid || typeof gclid !== 'string') {
+        sendResponse({ ok: false, error: 'invalid gclid' });
+        return true;
+      }
+      fetch(`${API_BASE}/v1/conversion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gclid,
+          conversionTime: new Date().toISOString(),
+          capturedAt,
+        }),
+      })
+        .then(async (res) => {
+          const body = await res.text();
+          if (!res.ok) {
+            console.warn('[Promptory] conversion API returned', res.status, body);
+            sendResponse({ ok: false, status: res.status });
+          } else {
+            console.log('[Promptory] conversion reported');
+            sendResponse({ ok: true });
+          }
+        })
+        .catch((err) => {
+          console.warn('[Promptory] conversion POST failed', err);
+          sendResponse({ ok: false, error: String(err) });
+        });
+      return true; // keep channel open for async sendResponse
+    }
+
+    const captureMessage = message as CaptureMessage;
+    if (captureMessage.type === 'PROMPT_CAPTURED') {
       const { platform, promptText, responseText, sourceUrl, threadId, isRegenerated } =
         message.payload;
 

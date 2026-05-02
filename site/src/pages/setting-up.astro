@@ -56,43 +56,13 @@ const PLATFORMS = [
     <div class="footer-note">Need help? Email <a href="mailto:info@promptory.chat">info@promptory.chat</a></div>
   </div>
 
-  <script is:inline>
-    /**
-     * Read the gclid that /go stored before the user clicked through to the
-     * Chrome Web Store, POST it to our backend so the install can be
-     * attributed to the originating ad click, then drop the local entry.
-     */
-    (function () {
-      try {
-        const raw = localStorage.getItem('promptory_gclid');
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
-        if (!parsed?.value) return;
-
-        // Don't carry stale gclids — Google attribution windows are 30 days.
-        const ageMs = Date.now() - (parsed.capturedAt ?? 0);
-        if (ageMs > 30 * 24 * 60 * 60 * 1000) {
-          localStorage.removeItem('promptory_gclid');
-          return;
-        }
-
-        fetch('https://api.promptory.chat/v1/conversion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            gclid: parsed.value,
-            conversionTime: new Date().toISOString(),
-          }),
-        }).then((res) => {
-          if (res.ok) localStorage.removeItem('promptory_gclid');
-        }).catch(() => {
-          // Will retry next time /setting-up is visited if the user opens it
-        });
-      } catch (e) {
-        // ignore
-      }
-    })();
-  </script>
+  <!--
+    Note: this page intentionally does NOT call any backend API.
+    The Promptory extension injects a content script on this page that
+    reads the gclid from localStorage and reports the conversion via the
+    extension's background worker. The extension is the trust source
+    ("I just got installed") so it owns the conversion-firing logic.
+  -->
 </Layout>
 
 <style>
