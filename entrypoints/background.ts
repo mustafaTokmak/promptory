@@ -6,11 +6,16 @@ const API_BASE = 'https://api.promptory.chat';
 export default defineBackground(() => {
   console.log('[Promptory] Background service worker started');
 
-  chrome.sidePanel
-    .setPanelBehavior({ openPanelOnActionClick: true })
-    .catch((err) =>
-      console.error('[Promptory] Failed to set side panel behavior', err),
-    );
+  // Chrome / Edge expose chrome.sidePanel; Firefox uses sidebar_action and
+  // has no equivalent JS API. Feature-detect so the background worker
+  // doesn't throw on Firefox boot.
+  if (chrome.sidePanel?.setPanelBehavior) {
+    chrome.sidePanel
+      .setPanelBehavior({ openPanelOnActionClick: true })
+      .catch((err) =>
+        console.error('[Promptory] Failed to set side panel behavior', err),
+      );
+  }
 
   // Open the welcome page on first install. /setting-up reads any gclid
   // captured by /go before the user clicked through to the Chrome Web
