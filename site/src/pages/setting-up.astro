@@ -1,0 +1,132 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+/**
+ * /setting-up — opened in a new tab by the extension's
+ * chrome.runtime.onInstalled handler immediately after install.
+ *
+ * Two jobs:
+ *   1. Onboard the user (this is the first thing they see post-install).
+ *   2. If a gclid was captured on /go before they installed, POST it to
+ *      our backend so we can upload the offline conversion to Google Ads.
+ */
+const PLATFORMS = [
+  { name: 'ChatGPT', url: 'https://chatgpt.com/', color: '#10a37f' },
+  { name: 'Claude', url: 'https://claude.ai/', color: '#d97706' },
+  { name: 'Gemini', url: 'https://gemini.google.com/', color: '#4285f4' },
+  { name: 'Perplexity', url: 'https://www.perplexity.ai/', color: '#6366f1' },
+  { name: 'Grok', url: 'https://grok.com/', color: '#1a1a1a' },
+  { name: 'Copilot', url: 'https://copilot.microsoft.com/', color: '#0078d4' },
+];
+---
+
+<Layout
+  title="Welcome to Promptory"
+  description="You're all set — start chatting and Promptory will save your prompts automatically."
+>
+  <div class="page-hero">
+    <div class="container">
+      <div class="page-label">Welcome</div>
+      <h1>You're all set 🎉</h1>
+      <p class="lead">Promptory now runs in the background on every major AI tool. Send a prompt anywhere and it'll show up in your library.</p>
+    </div>
+  </div>
+
+  <div class="content">
+    <h2>Try it now — pick a platform</h2>
+    <div class="platforms">
+      {PLATFORMS.map((p) => (
+        <a class="platform-card" href={p.url} target="_blank" rel="noreferrer">
+          <span class="dot" style={`background:${p.color}`}></span>
+          <div>
+            <div class="name">{p.name}</div>
+            <div class="action">Open →</div>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>Send a prompt.</strong> Just chat normally — Promptory captures both the prompt and response.</li>
+      <li><strong>Click the Promptory icon</strong> in your toolbar to open the side panel and see what's been saved.</li>
+      <li><strong>Search, star, copy, reuse.</strong> Your library lives entirely on your device.</li>
+    </ol>
+
+    <div class="footer-note">Need help? Email <a href="mailto:info@promptory.chat">info@promptory.chat</a></div>
+  </div>
+
+  <script is:inline>
+    /**
+     * Read the gclid that /go stored before the user clicked through to the
+     * Chrome Web Store, POST it to our backend so the install can be
+     * attributed to the originating ad click, then drop the local entry.
+     */
+    (function () {
+      try {
+        const raw = localStorage.getItem('promptory_gclid');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.value) return;
+
+        // Don't carry stale gclids — Google attribution windows are 30 days.
+        const ageMs = Date.now() - (parsed.capturedAt ?? 0);
+        if (ageMs > 30 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem('promptory_gclid');
+          return;
+        }
+
+        fetch('https://api.promptory.chat/v1/conversion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gclid: parsed.value,
+            conversionTime: new Date().toISOString(),
+          }),
+        }).then((res) => {
+          if (res.ok) localStorage.removeItem('promptory_gclid');
+        }).catch(() => {
+          // Will retry next time /setting-up is visited if the user opens it
+        });
+      } catch (e) {
+        // ignore
+      }
+    })();
+  </script>
+</Layout>
+
+<style>
+  .page-hero .lead { font-size: 18px; color: var(--muted); line-height: 1.7; max-width: 580px; margin-top: 12px; }
+  .content { max-width: 760px; margin: 0 auto; padding: 56px 24px 96px; }
+  h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 36px 0 16px; }
+
+  .platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .platform-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color .15s, transform .15s;
+  }
+  .platform-card:hover { border-color: var(--brand); transform: translateY(-1px); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .name { font-size: 14px; font-weight: 700; }
+  .action { font-size: 12px; color: var(--muted); }
+
+  .steps { padding-left: 22px; }
+  .steps li { font-size: 15px; line-height: 1.7; color: #333; margin-bottom: 6px; }
+
+  .footer-note { margin-top: 40px; font-size: 14px; color: var(--muted); }
+  .footer-note a { color: var(--brand); }
+  .footer-note a:hover { text-decoration: underline; }
+</style>
