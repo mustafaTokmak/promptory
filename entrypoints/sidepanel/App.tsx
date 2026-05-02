@@ -142,16 +142,30 @@ export default function App() {
     }
   };
 
-  const handleSendFeedback = () => {
-    // TODO: wire to backend once we have one — for now we just log it
-    // and dismiss. Mailto: gets ignored a lot and breaks the in-extension
-    // feel, so we keep this as a mock until the API exists.
-    console.log('[Promptory] Feedback received', {
-      rating: feedbackRating,
-      message: feedbackText.trim(),
-    });
+  const handleSendFeedback = async () => {
+    // Optimistic dismiss — UX feels instant, network failure is logged
+    // but doesn't block the user (their feedback is unrecoverable
+    // anyway, since they only get one shot at the modal).
     void handleDismissReview();
     toast('Thanks for the feedback!', 'success');
+
+    try {
+      const res = await fetch('https://api.promptory.chat/v1/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating: feedbackRating,
+          message: feedbackText.trim() || undefined,
+          version: chrome.runtime.getManifest().version,
+          source: 'sidepanel',
+        }),
+      });
+      if (!res.ok) {
+        console.warn('[Promptory] feedback API returned', res.status);
+      }
+    } catch (err) {
+      console.warn('[Promptory] feedback POST failed', err);
+    }
   };
 
   // Paste prompt text into the active AI tool's input field.

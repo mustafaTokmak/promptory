@@ -2,24 +2,23 @@ name = "promptory-api"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 
-# Custom domain — wired up after first deploy via the Cloudflare dashboard
-# routes = [
-#   { pattern = "api.promptory.chat", custom_domain = true },
-# ]
+routes = [
+  { pattern = "api.promptory.chat", custom_domain = true },
+]
 
 # D1 database for persistent data (feedback, conversions).
 # After running `wrangler d1 create promptory`, paste the returned database_id below.
 [[d1_databases]]
 binding = "DB"
 database_name = "promptory"
-database_id = "REPLACE_WITH_DATABASE_ID_AFTER_CREATE"
+database_id = "87fe1d8f-57f3-4a9b-88f1-1d874898a837"
 migrations_dir = "migrations"
 
 # KV namespace for rate-limit counters.
 # After running `wrangler kv namespace create RATE_LIMIT`, paste the id below.
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "REPLACE_WITH_KV_ID_AFTER_CREATE"
+id = "b24da5afc00a4ea78a129a3c107299d4"
 
 # Secrets are NOT defined here — set them with:
 #   wrangler secret put GOOGLE_ADS_DEVELOPER_TOKEN
