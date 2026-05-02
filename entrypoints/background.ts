@@ -25,7 +25,7 @@ export default defineBackground(() => {
     }
   });
 
-  chrome.runtime.onMessage.addListener((message: any, _sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((message: any, sender, sendResponse) => {
     // gclid forwarded from the content script running on promptory.chat —
     // ship it to our backend which uploads the offline conversion to Google Ads.
     if (message?.type === 'GCLID_CAPTURED') {
@@ -58,6 +58,20 @@ export default defineBackground(() => {
           sendResponse({ ok: false, error: String(err) });
         });
       return true; // keep channel open for async sendResponse
+    }
+
+    // The /setting-up bridge asks us to close it and replace it with
+    // the dashboard once the gclid handshake is done. We do it from the
+    // background so the user sees a single-tab transition.
+    if (message?.type === 'OPEN_DASHBOARD_AND_CLOSE_THIS_TAB') {
+      const tabId = sender.tab?.id;
+      if (tabId !== undefined) {
+        chrome.tabs
+          .update(tabId, { url: chrome.runtime.getURL('/dashboard.html') })
+          .catch((err) => console.warn('[Promptory] tab swap failed', err));
+      }
+      sendResponse({ ok: true });
+      return true;
     }
 
     const captureMessage = message as CaptureMessage;

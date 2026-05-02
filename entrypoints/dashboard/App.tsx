@@ -493,6 +493,15 @@ export default function App() {
   );
 }
 
+const PLATFORM_LAUNCHERS: Array<{ name: string; url: string; color: string }> = [
+  { name: 'ChatGPT', url: 'https://chatgpt.com/', color: '#10a37f' },
+  { name: 'Claude', url: 'https://claude.ai/', color: '#d97706' },
+  { name: 'Gemini', url: 'https://gemini.google.com/', color: '#4285f4' },
+  { name: 'Perplexity', url: 'https://www.perplexity.ai/', color: '#6366f1' },
+  { name: 'Grok', url: 'https://grok.com/', color: '#1a1a1a' },
+  { name: 'Copilot', url: 'https://copilot.microsoft.com/', color: '#0078d4' },
+];
+
 function EmptyState({
   search,
   filterLabel,
@@ -500,26 +509,60 @@ function EmptyState({
   search: string;
   filterLabel: string | null;
 }) {
-  let title: string;
-  let body: string;
-
-  if (search) {
-    title = 'No prompts match your search';
-    body = 'Try a different search term, or clear the filter on the left.';
-  } else if (filterLabel) {
-    title = `No prompts in ${filterLabel} yet`;
-    body =
-      'Prompts you capture that match this filter will show up here automatically.';
-  } else {
-    title = 'No prompts saved yet';
-    body =
-      'Start chatting with ChatGPT, Gemini, Claude, Perplexity, Grok, or Copilot — your prompts will be saved automatically.';
+  // Search + filter empty states keep the simple single-line layout.
+  if (search || filterLabel) {
+    return (
+      <div className="flex h-60 flex-col items-center justify-center px-4 text-center">
+        <p className="mb-1 text-base text-gray-700">
+          {search
+            ? 'No prompts match your search'
+            : `No prompts in ${filterLabel} yet`}
+        </p>
+        <p className="max-w-md text-sm text-gray-400">
+          {search
+            ? 'Try a different search term, or clear the filter on the left.'
+            : 'Prompts you capture that match this filter will show up here automatically.'}
+        </p>
+      </div>
+    );
   }
 
+  // First-time empty state: invite the user to start a conversation on any
+  // supported platform. Cards open in a new tab so the dashboard stays open.
   return (
-    <div className="flex h-60 flex-col items-center justify-center px-4 text-center">
-      <p className="mb-1 text-base text-gray-700">{title}</p>
-      <p className="max-w-md text-sm text-gray-400">{body}</p>
+    <div className="flex flex-col items-center px-4 py-10 text-center">
+      <div className="text-4xl mb-3">✨</div>
+      <p className="mb-1 text-lg font-semibold text-gray-900">
+        No prompts saved yet
+      </p>
+      <p className="max-w-md text-sm text-gray-500 mb-6">
+        Try it now — pick a platform. Promptory captures every prompt you
+        send automatically.
+      </p>
+      <div className="grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+        {PLATFORM_LAUNCHERS.map((p) => (
+          <a
+            key={p.name}
+            href={p.url}
+            target="_blank"
+            rel="noreferrer"
+            className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-sm"
+          >
+            <span
+              className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              style={{ background: p.color }}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-gray-900">
+                {p.name}
+              </div>
+              <div className="text-xs text-gray-400 group-hover:text-brand-600">
+                Open →
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
