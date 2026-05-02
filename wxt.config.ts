@@ -53,7 +53,17 @@ export default defineConfig({
             strict_min_version: '128.0',
           },
         },
-      };
+        // Firefox 137+ requires explicit data-collection disclosure on AMO.
+        //   websiteContent          — we capture prompt + response text from
+        //                             ChatGPT/Claude/etc, stored locally only.
+        //   technicalAndInteraction — opt-in feedback POST to api.promptory.chat
+        //                             when the user explicitly clicks Send Feedback.
+        // Everything else is "none" — no PII, location, etc.
+        data_collection_permissions: {
+          required: ['websiteContent'],
+          optional: ['technicalAndInteraction'],
+        },
+      } as Record<string, unknown>;
     }
 
     // Chrome / Edge / other Chromium browsers
