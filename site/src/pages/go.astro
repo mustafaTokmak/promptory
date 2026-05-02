@@ -2,16 +2,14 @@
 /**
  * /go — Google Ads bridge page.
  *
- * Captures the gclid from the inbound ad click, stores it in localStorage
- * (same origin as /setting-up which reads it back after the user installs
- * the extension), and immediately redirects to the Chrome Web Store
- * listing. The user sees this page for ~50ms.
+ * Captures the gclid from the inbound ad click into localStorage on
+ * page load, then waits for the user to click "Add to Chrome". Same
+ * origin as /setting-up which reads the gclid back after install.
  *
- * Why a bridge page rather than redirecting straight to CWS:
- *   - The Chrome Web Store is a third-party domain we can't instrument.
- *   - Google Ads auto-tagging only attaches gclid to URLs we control.
- *   - localStorage on promptory.chat persists across the install round-trip
- *     so /setting-up can recover the gclid and ping our backend.
+ * Click-through bridge (vs. auto-redirect) on purpose:
+ *   - Shows users they're on the right brand before leaving
+ *   - Avoids pop-up blockers / scammy auto-redirect feel
+ *   - Higher-intent click → better install rate downstream
  */
 const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg';
 ---
@@ -22,27 +20,119 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Promptory — Loading…</title>
+  <title>Promptory — Add to Chrome</title>
   <link rel="icon" href="/favicon.png" />
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #fff; color: #0f0f0f; }
-    .wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; }
-    .logo { width: 56px; height: 56px; border-radius: 14px; background: #e11d48; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 28px; font-weight: 900; }
-    .text { color: #555; font-size: 15px; }
-    .spinner { width: 18px; height: 18px; border: 2px solid #e11d48; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    :root {
+      --brand: #e11d48;
+      --brand-d: #be123c;
+      --text: #0f0f0f;
+      --muted: #555;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #fff; color: var(--text); }
+    .wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: 32px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .wrap::before {
+      content: '';
+      position: absolute;
+      top: -200px; right: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(ellipse at center, #ffe4ea 0%, rgba(255,255,255,0) 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .inner { position: relative; z-index: 1; max-width: 480px; }
+    .logo {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      background: var(--brand);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 32px; font-weight: 900;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(225, 29, 72, 0.25);
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin: 0 0 12px;
+    }
+    h1 em { color: var(--brand); font-style: normal; }
+    p.lead {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0 0 32px;
+    }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--brand);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(225, 29, 72, 0.3);
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .cta:hover {
+      background: var(--brand-d);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(225, 29, 72, 0.35);
+    }
+    .meta {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #888;
+    }
+    .chrome-icon {
+      width: 18px; height: 18px;
+      background: conic-gradient(from 0deg, #4285f4, #ea4335 33%, #fbbc04 66%, #34a853);
+      border-radius: 50%;
+      display: inline-block;
+      position: relative;
+    }
+    .chrome-icon::after {
+      content: ''; position: absolute; inset: 4px;
+      background: #fff; border-radius: 50%;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="logo">P</div>
-    <div class="text">Redirecting to Chrome Web Store…</div>
-    <div class="spinner"></div>
-    <noscript>
-      <p style="margin-top:24px"><a href={CWS_URL}>Continue to Chrome Web Store →</a></p>
-    </noscript>
-  </div>
-  <script is:inline define:vars={{ CWS_URL }}>
+  <main class="wrap">
+    <div class="inner">
+      <div class="logo">P</div>
+      <h1>Add Promptory<br/>to <em>Chrome</em></h1>
+      <p class="lead">Auto-saves every prompt you send to ChatGPT, Claude, Gemini and more — so you never lose a great one.</p>
+
+      <a class="cta" href={CWS_URL} id="cta">
+        <span class="chrome-icon"></span>
+        Add to Chrome — it's free
+      </a>
+
+      <div class="meta">No account · Works in 30 seconds</div>
+    </div>
+  </main>
+
+  <script is:inline>
+    /**
+     * Capture the gclid into localStorage on page load. /setting-up reads
+     * it after install to fire an offline conversion to Google Ads.
+     */
     (function () {
       try {
         const url = new URL(window.location.href);
@@ -54,10 +144,8 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
           );
         }
       } catch (e) {
-        // localStorage blocked / unavailable — proceed without attribution
+        // ignore
       }
-      // Use replace so the bridge page doesn't end up in browser history
-      window.location.replace(CWS_URL);
     })();
   </script>
 </body>
