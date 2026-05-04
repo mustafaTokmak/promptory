@@ -1,25 +1,30 @@
 ══════════════════════════════════════════════
- PROMPTORY — CWS STORE LISTING COPY (v2)
+ PROMPTORY — CWS STORE LISTING COPY (v3)
 ══════════════════════════════════════════════
 
 CHANGE LOG
 ──────────
-v2 (May 2 2026): rewrote to mention each platform name exactly once.
-v1 was rejected by CWS for "Keyword Spam" (Yellow Argon) because the
-six platform names appeared twice — once in HOW IT WORKS prose and
-again in a WORKS WITH bullet list.
+v3 (May 3 2026): removed the comma-separated brand list entirely.
+v2 still hit "Keyword Spam (Yellow Argon)" because the line
+"ChatGPT, Claude, Gemini, Perplexity, Grok, and Microsoft Copilot"
+appears to trip the detector even when each name appears just once.
+v3 mentions only ChatGPT explicitly (it's our target keyword and
+appears in the title). Other platforms are referenced as "popular
+AI chatbots" or shown in screenshots — never enumerated in copy.
+v2 (May 2 2026): rewrote so each brand appeared only once. Still rejected.
+v1: had the brand list twice. Rejected.
 
 
 SHORT DESCRIPTION (132 chars max)
 ──────────────────────────────────
-Auto-save your AI prompts. Search, tag, reuse. Works on every major chatbot, runs locally, no account required.
+Auto-save your AI prompts. Search, tag, and reuse — runs locally on your device, no account required.
 
 
 FULL DESCRIPTION (paste into CWS Developer Dashboard)
 ──────────────────────────────────────────────────────
 Never lose a great prompt again.
 
-Promptory captures every prompt you send to popular AI chatbots — ChatGPT, Claude, Gemini, Perplexity, Grok, and Microsoft Copilot — and stores them privately on your device. Open the side panel, search your entire history, and paste the perfect prompt back into the active tool with one click.
+Promptory captures every prompt you send to ChatGPT and other popular AI chatbots, then stores them privately on your device. Open the side panel, search your entire history, and paste the perfect prompt back into the active tool with one click.
 
 🔒 100% LOCAL & PRIVATE
 Your prompts never leave your browser. Everything is stored in local IndexedDB — no accounts, no cloud sync, no servers receiving your data. We literally can't read your prompts.
@@ -40,7 +45,7 @@ Open the side panel, find your prompt, hit Paste — and it's injected directly 
 Download your entire prompt library as JSON or CSV at any time. Your data is always portable.
 
 📊 FULL DASHBOARD
-Open the library view for a full-width browsing experience with search, platform filters, favorites, and bulk actions.
+Open the library view for a full-width browsing experience with search, filters, favorites, and bulk actions.
 
 ── PERMISSIONS ──
 • storage — saves prompts locally
@@ -54,22 +59,44 @@ Privacy policy: https://promptory.chat/privacy
 
 
 ══════════════════════════════════════════════
- WHAT WAS FLAGGED (v1 → DON'T DO)
+ WHY THE COMMA-LIST HAD TO GO ENTIRELY
 ══════════════════════════════════════════════
 
-Original v1 description had:
-  - Body: "Every time you send a message to ChatGPT, Claude, Gemini,
-    Perplexity, Grok, or Copilot, Promptory quietly saves it..."
-  - Footer: "── SUPPORTED PLATFORMS ──
-            ✓ ChatGPT (chatgpt.com)
-            ✓ Claude (claude.ai)  ...etc"
+CWS's automated keyword-density detector apparently scores the
+specific PATTERN "BrandA, BrandB, BrandC, BrandD, BrandE, and
+BrandF" highly regardless of how many other words surround it.
+This is a known anti-keyword-stuffing heuristic — listing
+competitor brands in commercial copy is the textbook spam pattern
+they're filtering for, even when the listing is factually accurate.
 
-Both blocks listed the same six brand names. CWS interpreted the
-duplication as keyword stuffing and cited it under the
-"misleading / excessive metadata" policy.
+Workaround: communicate multi-platform support through:
+  - Title (currently mentions ChatGPT specifically)
+  - Screenshots (show the side panel listing prompts from
+    multiple platforms — visual proof, no keyword density)
+  - Promo tile (lists platform names as logos/dots, not text)
+  - Privacy policy / website (more latitude there)
 
-In v2, each brand is named exactly once (in the opening paragraph)
-and the SUPPORTED PLATFORMS bullet list is removed entirely.
+Don't enumerate platforms in the store description copy.
+
+
+══════════════════════════════════════════════
+ NAME (currently in wxt.config.ts)
+══════════════════════════════════════════════
+
+Current: "Promptory - AI Prompt Directory for ChatGPT"
+
+Status: not flagged by CWS (yet). The rejection emails only cite
+the description. Keeping the name unchanged for now and changing
+only the description = isolating one variable per review cycle.
+
+If the next review rejects on the name (trademark / brand-in-title),
+fall back options ranked by safety:
+  1. "Promptory — Save Your AI Prompts"   (safest, action-oriented)
+  2. "Promptory — AI Prompt Manager"        (generic, descriptive)
+  3. "Promptory — AI Prompt Library"        (distinctive, accurate)
+  4. "Promptory"                            (cleanest, brand-only)
+
+Don't preemptively change. One variable per cycle.
 
 
 ══════════════════════════════════════════════
@@ -84,11 +111,29 @@ Tags (pick up to 5 in CWS):
 
 
 ══════════════════════════════════════════════
- ALSO REVIEW FOR EDGE / FIREFOX
+ SEARCH TERMS (Edge — up to 7, ≤30 chars each, ≤21 words total)
 ══════════════════════════════════════════════
 
-If the same flagged copy was used for Edge Add-ons or Mozilla AMO
-listings, update those before they hit a similar rejection.
+1. ChatGPT prompt manager
+2. AI prompt history
+3. Claude prompt library
+4. save AI prompts
+5. prompt organizer
+6. ChatGPT history
+7. Gemini prompt saver
+
+(These are search-term metadata — different from the description
+and not visible to end users. Brand-in-search-terms is fine; CWS /
+Edge / AMO all allow it. The keyword-spam rule only applies to
+the user-facing description.)
+
+
+══════════════════════════════════════════════
+ ALSO UPDATE FOR EDGE / FIREFOX
+══════════════════════════════════════════════
+
+If you submitted Edge / AMO listings using the v1 or v2 description,
+update those NOW before they hit similar rejections.
 
 Edge: Microsoft Partner Center → Promptory → Properties → Description
 AMO:  addons.mozilla.org/developers → Promptory → Edit listing
