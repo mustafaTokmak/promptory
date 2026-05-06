@@ -4,6 +4,11 @@
 
 CHANGE LOG
 ──────────
+v3.1 (May 3 2026): removed unused 'storage' permission from manifest;
+bumped version to 0.1.1. Description text unchanged from v3.
+CWS rejected v3 (Purple Potassium) for declaring 'storage' without
+using it — we use IndexedDB (Dexie), not chrome.storage.local.
+
 v3 (May 3 2026): removed the comma-separated brand list entirely.
 v2 still hit "Keyword Spam (Yellow Argon)" because the line
 "ChatGPT, Claude, Gemini, Perplexity, Grok, and Microsoft Copilot"
@@ -48,7 +53,6 @@ Download your entire prompt library as JSON or CSV at any time. Your data is alw
 Open the library view for a full-width browsing experience with search, filters, favorites, and bulk actions.
 
 ── PERMISSIONS ──
-• storage — saves prompts locally
 • sidePanel — displays the side panel UI
 • scripting — detects prompts and pastes them back
 • Host permissions limited to the supported AI platforms only

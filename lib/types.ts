@@ -53,4 +53,10 @@ export interface Settings {
   consentGiven: boolean;
   consentTimestamp: number | null;
   reviewPromptShown: boolean;
+  /**
+   * Has the first-run onboarding (which presents the consent choice) been
+   * shown? Lets us re-prompt later for users who skipped without deciding.
+   */
+  onboardingShown?: boolean;
+  onboardingShownAt?: number | null;
 }

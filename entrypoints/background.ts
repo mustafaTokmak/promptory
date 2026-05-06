@@ -17,18 +17,25 @@ export default defineBackground(() => {
       );
   }
 
-  // Open the welcome page on first install. /setting-up reads any gclid
-  // captured by /go before the user clicked through to the Chrome Web
-  // Store and ships it to our backend for Google Ads attribution.
-  chrome.runtime.onInstalled.addListener((details) => {
-    if (details.reason === 'install') {
-      chrome.tabs
-        .create({ url: 'https://promptory.chat/setting-up' })
-        .catch((err) =>
-          console.warn('[Promptory] Failed to open welcome page', err),
-        );
-    }
-  });
+  // First-install welcome page is intentionally disabled for now.
+  //
+  // The /setting-up page exists on the site and the content script on
+  // promptory.chat still picks up any stored gclid → conversion ping if
+  // a user visits the site themselves. We just don't auto-pop the tab
+  // on install while we wait for Google Ads API token approval.
+  //
+  // Re-enable by uncommenting the block below when we're ready to run
+  // paid acquisition campaigns.
+  //
+  // chrome.runtime.onInstalled.addListener((details) => {
+  //   if (details.reason === 'install') {
+  //     chrome.tabs
+  //       .create({ url: 'https://promptory.chat/setting-up' })
+  //       .catch((err) =>
+  //         console.warn('[Promptory] Failed to open welcome page', err),
+  //       );
+  //   }
+  // });
 
   chrome.runtime.onMessage.addListener((message: any, sender, sendResponse) => {
     // gclid forwarded from the content script running on promptory.chat —

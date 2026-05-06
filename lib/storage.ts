@@ -221,6 +221,15 @@ export async function markReviewPromptShown(): Promise<void> {
   await db.settings.put({ ...current, reviewPromptShown: true });
 }
 
+export async function markOnboardingShown(): Promise<void> {
+  const current = await getSettings();
+  await db.settings.put({
+    ...current,
+    onboardingShown: true,
+    onboardingShownAt: Date.now(),
+  });
+}
+
 /**
  * Exports all prompts as a CSV string.
  * Columns: id, platform, timestamp, promptText, responseText, tags, isFavorite
