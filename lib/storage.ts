@@ -1,5 +1,12 @@
 import { db } from './db';
-import type { Prompt, Folder, ExportData, Settings } from './types';
+import type {
+  Prompt,
+  Folder,
+  ExportData,
+  Settings,
+  Gclid,
+  UploadStatus,
+} from './types';
 
 // ── Prompts ──────────────────────────────────────────────
 
@@ -35,6 +42,13 @@ export async function addPrompt(
     return null;
   }
 
+  // Initial uploadStatus is set from current consent state — forward-only
+  // consent. Captured pre-consent? 'skipped' forever, no retroactive
+  // upload when the user later opts in. Captured with consent on? 'pending'
+  // until the flush helper successfully POSTs it.
+  const settings = await db.settings.get(1);
+  const uploadStatus: UploadStatus = settings?.consentGiven ? 'pending' : 'skipped';
+
   const id = crypto.randomUUID();
   await db.prompts.add({
     ...prompt,
@@ -43,8 +57,50 @@ export async function addPrompt(
     tags: [],
     folderId: null,
     isFavorite: false,
+    uploadStatus,
+    uploadedAt: null,
   });
   return id;
+}
+
+// ── Community upload queue ────────────────────────────────
+
+/**
+ * Returns the oldest N prompts still waiting to be uploaded. Ordered by
+ * capture timestamp ascending so the queue drains FIFO — keeps the time
+ * gap between capture and remote storage as small as the network allows.
+ */
+export async function getPendingUploadPrompts(limit = 50): Promise<Prompt[]> {
+  return db.prompts
+    .where('uploadStatus')
+    .equals('pending')
+    .limit(limit)
+    .sortBy('timestamp');
+}
+
+/**
+ * Marks a single prompt as successfully uploaded. Called by the background
+ * flush helper after /v1/prompts returns 2xx.
+ */
+export async function markPromptUploaded(id: string): Promise<void> {
+  await db.prompts.update(id, {
+    uploadStatus: 'sent',
+    uploadedAt: Date.now(),
+  });
+}
+
+/**
+ * Cancels every queued (pending) upload. Called when the user opts out of
+ * community sharing — pending rows flip to 'skipped' so the flush helper
+ * never picks them up again. Already-sent rows are NOT touched (we can't
+ * un-share them per-user; that's a known and documented constraint).
+ */
+export async function cancelPendingUploads(): Promise<number> {
+  const updated = await db.prompts
+    .where('uploadStatus')
+    .equals('pending')
+    .modify({ uploadStatus: 'skipped' });
+  return updated;
 }
 
 /** Delete every prompt — used by the "Clear All" button. */
@@ -200,6 +256,11 @@ const DEFAULT_SETTINGS: Settings = {
   consentGiven: false,
   consentTimestamp: null,
   reviewPromptShown: false,
+  onboardingShown: false,
+  onboardingShownAt: null,
+  analyticsConsent: false,
+  analyticsConsentAt: null,
+  clientId: '', // populated lazily by getOrCreateClientId()
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -214,6 +275,28 @@ export async function setConsent(given: boolean): Promise<void> {
     consentGiven: given,
     consentTimestamp: given ? Date.now() : null,
   });
+}
+
+export async function setAnalyticsConsent(given: boolean): Promise<void> {
+  const current = await getSettings();
+  await db.settings.put({
+    ...current,
+    analyticsConsent: given,
+    analyticsConsentAt: given ? Date.now() : null,
+  });
+}
+
+/**
+ * Returns the GA4 client_id for this install, generating + persisting one
+ * the first time it's needed. Called only by the analytics module — never
+ * generates an id unless analytics is actually being used.
+ */
+export async function getOrCreateClientId(): Promise<string> {
+  const current = await getSettings();
+  if (current.clientId) return current.clientId;
+  const clientId = crypto.randomUUID();
+  await db.settings.put({ ...current, clientId });
+  return clientId;
 }
 
 export async function markReviewPromptShown(): Promise<void> {
@@ -254,4 +337,37 @@ export async function exportAsCsv(): Promise<string> {
   );
 
   return [header, ...rows].join('\n');
+}
+
+// ── Gclids ───────────────────────────────────────────────
+
+/**
+ * Persists a gclid captured from the bridge content script. Uses `put`
+ * so re-captures of the same gclid upsert cleanly. `reportedAt` starts
+ * empty; `markGclidReported` populates fields as each conversion fires.
+ */
+export async function saveGclid(value: string, capturedAt: number): Promise<void> {
+  await db.gclids.put({
+    id: value,
+    capturedAt,
+    persistedAt: Date.now(),
+    reportedAt: {},
+  } satisfies Gclid);
+}
+
+/**
+ * Marks one of the per-event timestamps on an existing gclid row.
+ * No-op if the row doesn't exist (defensive — should never happen since
+ * callers chain mark-after-save, but cheap insurance against future
+ * callers that look up by gclid string from elsewhere).
+ */
+export async function markGclidReported(
+  value: string,
+  event: 'install' | 'day7' | 'day30',
+): Promise<void> {
+  const row = await db.gclids.get(value);
+  if (!row) return;
+  await db.gclids.update(value, {
+    reportedAt: { ...row.reportedAt, [event]: Date.now() },
+  });
 }

@@ -6,13 +6,13 @@
  *      reports the offline conversion to our backend.
  *
  *   2. If we're on /setting-up (the post-install bridge), tell the
- *      background to close this tab and open the dashboard.
+ *      background to swap this tab for the welcome onboarding.
  *
  * Why a content script (vs. having /setting-up POST to our API directly):
  *   - The extension is the trust source ("I just got installed"). A
  *     page-side fetch would also fire for any random visitor, polluting
  *     conversion data.
- *   - Lets us close the bridge tab + open the dashboard cleanly, which
+ *   - Lets us swap the bridge tab for the welcome page cleanly, which
  *     a static page can't do on its own.
  */
 
@@ -22,9 +22,15 @@ export default defineContentScript({
   matches: ['https://promptory.chat/*'],
   runAt: 'document_idle',
   main: () => {
-    const isSettingUp = window.location.pathname === '/setting-up';
+    // Astro builds /setting-up as /setting-up/index.html, so the
+    // canonical URL has a trailing slash. Strip it before comparing.
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    const isSettingUp = path === '/setting-up';
 
-    // Always try to forward a gclid if one is stashed
+    // Always try to forward a gclid if one is stashed.
+    // sendResponse({ok:true}) now means "extension persisted it" (not
+    // "extension reported it") — clearing localStorage on ok is therefore
+    // safe even if the conversion API is down.
     const gclid = readStoredGclid();
     if (gclid) {
       console.log('[Promptory] forwarding gclid to background');
@@ -36,13 +42,14 @@ export default defineContentScript({
         .catch((err) => console.warn('[Promptory] gclid forward failed', err));
     }
 
-    // On the post-install bridge, ask the background to swap this tab for
-    // the dashboard. Small delay so the gclid sendMessage gets a head start.
+    // On the post-install bridge, ask the background to swap this tab
+    // for the welcome onboarding. Small delay so the gclid sendMessage
+    // gets a head start.
     if (isSettingUp) {
       setTimeout(() => {
         chrome.runtime
-          .sendMessage({ type: 'OPEN_DASHBOARD_AND_CLOSE_THIS_TAB' })
-          .catch((err) => console.warn('[Promptory] dashboard open failed', err));
+          .sendMessage({ type: 'BRIDGE_HANDSHAKE_COMPLETE' })
+          .catch((err) => console.warn('[Promptory] bridge handshake failed', err));
       }, 250);
     }
   },

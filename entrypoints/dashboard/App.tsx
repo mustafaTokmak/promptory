@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Download, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { Download, RefreshCw, Settings, Trash2, Upload } from 'lucide-react';
 import type { Prompt, Folder } from '../../lib/types';
 import {
   getAllPrompts,
@@ -17,11 +17,13 @@ import {
   getPromptCount,
   getSettings,
   setConsent,
+  markOnboardingShown,
 } from '../../lib/storage';
 import { db } from '../../lib/db';
 import { PromptCard } from '../../components/PromptCard';
 import { SearchBar } from '../../components/SearchBar';
 import { FolderSidebar, type FilterType } from '../../components/FolderSidebar';
+import { SettingsDialog } from '../../components/SettingsDialog';
 import { getPlatformInfo } from '../../lib/platform';
 import {
   Button,
@@ -47,6 +49,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('library');
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentModalOpen, setConsentModalOpen] = useState(false);
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Timestamp of the user's most recent onboarding decision. Used to
+  // suppress the Community tab modal for 24h after a fresh decline so we
+  // don't immediately re-prompt someone who just chose to skip.
+  const [onboardingShownAt, setOnboardingShownAt] = useState<number | null>(null);
 
   const loadFolders = useCallback(async () => {
     setFolders(await getAllFolders());
@@ -81,7 +89,14 @@ export default function App() {
 
   useEffect(() => {
     loadFolders();
-    getSettings().then((s) => setConsentGiven(s.consentGiven));
+    getSettings().then((s) => {
+      setConsentGiven(s.consentGiven);
+      setOnboardingShownAt(s.onboardingShownAt ?? null);
+      if (!s.onboardingShown) setShowOnboardingBanner(true);
+    });
+    chrome.runtime
+      .sendMessage({ type: 'TRACK', event: 'dashboard_opened' })
+      .catch(() => {/* fire-and-forget */});
   }, [loadFolders]);
 
   useEffect(() => {
@@ -206,8 +221,40 @@ export default function App() {
     setActiveTab('community');
   };
 
+  const handleOpenSetup = () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('/welcome.html') });
+  };
+
+  const handleDismissOnboardingBanner = async () => {
+    await markOnboardingShown();
+    setShowOnboardingBanner(false);
+    chrome.runtime
+      .sendMessage({
+        type: 'TRACK',
+        event: 'onboarding_skipped',
+        params: { via: 'banner_dismiss' },
+      })
+      .catch(() => {/* fire-and-forget */});
+  };
+
+
+  const COMMUNITY_RE_PROMPT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
   const handleTabClick = (tab: DashboardTab) => {
     if (tab === 'community' && !consentGiven) {
+      // Suppress the modal if the user *just* declined community in
+      // onboarding (or via banner Dismiss). After 24h treat the click as a
+      // fresh signal of interest and re-ask. If onboardingShownAt is null
+      // (e.g. "Decide later"), allow the modal — we haven't asked yet.
+      const recentlyDeclined =
+        onboardingShownAt !== null &&
+        Date.now() - onboardingShownAt < COMMUNITY_RE_PROMPT_COOLDOWN_MS;
+      if (recentlyDeclined) {
+        // Still let them visit the tab; they'll see the "consent required"
+        // empty state via the existing CommunityTab guard. No modal pop.
+        setActiveTab(tab);
+        return;
+      }
       setConsentModalOpen(true);
       return;
     }
@@ -283,6 +330,15 @@ export default function App() {
             >
               Export CSV
             </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => setSettingsOpen(true)}
+              title="Privacy & data settings"
+              aria-label="Open privacy settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         {/* Tab bar */}
@@ -312,6 +368,35 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {showOnboardingBanner && (
+        <div className="border-b border-brand-200 bg-brand-50 px-6 py-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-brand-800">
+                Finish setup
+              </span>
+              <span className="ml-2 text-sm text-brand-700">
+                Choose your privacy preferences — analytics &amp; community.
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleOpenSetup}
+                className="text-sm font-medium text-brand-700 hover:underline"
+              >
+                Open setup →
+              </button>
+              <button
+                onClick={handleDismissOnboardingBanner}
+                className="text-sm text-brand-600 hover:text-brand-800"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'library' ? (
       <div className="flex flex-1 overflow-hidden">
@@ -423,11 +508,7 @@ export default function App() {
       ) : (
         <CommunityTab
           consentGiven={consentGiven}
-          onOptOut={async () => {
-            await setConsent(false);
-            setConsentGiven(false);
-            setActiveTab('library');
-          }}
+          onOpenSetup={handleOpenSetup}
         />
       )}
 
@@ -458,6 +539,12 @@ export default function App() {
         confirmLabel="Delete"
         onConfirm={handleBulkDelete}
         variant="danger"
+      />
+
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onConsentChanged={({ consentGiven: c }) => setConsentGiven(c)}
       />
 
       {/* Community consent modal */}
@@ -569,12 +656,32 @@ function EmptyState({
 
 function CommunityTab({
   consentGiven,
-  onOptOut,
+  onOpenSetup,
 }: {
   consentGiven: boolean;
-  onOptOut: () => void;
+  onOpenSetup: () => void;
 }) {
-  if (!consentGiven) return null;
+  if (!consentGiven) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+        <div className="mb-4 text-4xl">🤐</div>
+        <h2 className="mb-2 text-lg font-semibold text-gray-900">
+          Community sharing is off
+        </h2>
+        <p className="max-w-sm text-sm text-gray-500">
+          You haven't opted in to contribute prompts to the community library
+          yet. You can change this anytime — sharing helps everyone build a
+          better collection.
+        </p>
+        <button
+          onClick={onOpenSetup}
+          className="mt-6 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        >
+          Open setup to opt in
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -587,12 +694,6 @@ function CommunityTab({
       <p className="mt-3 text-xs text-gray-400">
         Your anonymized prompts help build this library for everyone.
       </p>
-      <button
-        onClick={onOptOut}
-        className="mt-6 text-xs text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors"
-      >
-        Opt out &amp; stop sharing my prompts
-      </button>
     </div>
   );
 }

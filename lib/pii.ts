@@ -6,27 +6,32 @@ export interface PiiMatch {
   index: number;
 }
 
-const PATTERNS: { type: PiiType; regex: RegExp }[] = [
+const PATTERNS: { type: PiiType; regex: RegExp; placeholder: string }[] = [
   {
     type: 'email',
     regex: /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g,
+    placeholder: '[email]',
   },
   {
     // Credit card before phone so spans are registered first
     type: 'credit_card',
     regex: /\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b/g,
+    placeholder: '[card]',
   },
   {
     type: 'ssn',
     regex: /\b\d{3}[-\s]\d{2}[-\s]\d{4}\b/g,
+    placeholder: '[ssn]',
   },
   {
     type: 'phone',
     regex: /(\+?\d[\d\s\-().]{7,}\d)/g,
+    placeholder: '[phone]',
   },
   {
     type: 'auth_token',
     regex: /https?:\/\/\S+[?&](token|key|auth|secret|api_key)=[^\s&"']+/gi,
+    placeholder: '[redacted-url]',
   },
 ];
 
@@ -57,4 +62,28 @@ export function detectPii(text: string): PiiMatch[] {
   }
 
   return matches;
+}
+
+/**
+ * Replaces all detected PII with type-tagged placeholders.
+ * Returns the cleaned text plus the count of substitutions made — callers
+ * use the count to set a `pii_detected` flag on uploads (informational
+ * only; the server scrubber doesn't trust it).
+ *
+ * Run order is the same as detectPii: more-specific patterns first so
+ * phone's loose digit regex doesn't swallow card / SSN spans.
+ */
+export function scrubPii(text: string): { clean: string; count: number } {
+  let clean = text;
+  let count = 0;
+
+  for (const { regex, placeholder } of PATTERNS) {
+    regex.lastIndex = 0;
+    clean = clean.replace(regex, () => {
+      count += 1;
+      return placeholder;
+    });
+  }
+
+  return { clean, count };
 }

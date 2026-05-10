@@ -30,4 +30,7 @@ id = "b24da5afc00a4ea78a129a3c107299d4"
 
 [vars]
 ALLOWED_ORIGIN_SITE = "https://promptory.chat"
-ALLOWED_ORIGIN_EXTENSION = "chrome-extension://hbaodafglfcggljhdefilahgcpipcckg"
+# Comma-separated. First entry is the published CWS extension ID; second
+# is a locally-unpacked dev install. Drop the dev entry once the manifest
+# `key` field locks the local ID to match prod.
+ALLOWED_ORIGIN_EXTENSION = "chrome-extension://hbaodafglfcggljhdefilahgcpipcckg,chrome-extension://bmklmhmjplmoaefflkjgeabfhlkcdgel"

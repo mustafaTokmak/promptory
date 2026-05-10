@@ -10,6 +10,7 @@ import {
   deleteAllPrompts,
   getSettings,
   markReviewPromptShown,
+  markOnboardingShown,
 } from '../../lib/storage';
 import { db } from '../../lib/db';
 import { PromptCard } from '../../components/PromptCard';
@@ -47,6 +48,7 @@ export default function App() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [showReviewBanner, setShowReviewBanner] = useState(false);
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   // Two-step review flow: rate first, then either go to CWS (5★) or
   // collect feedback internally (< 5★) so we don't get bad public reviews
   // from solvable problems.
@@ -98,6 +100,15 @@ export default function App() {
   }, [checkReviewPrompt]);
 
   useEffect(() => {
+    getSettings().then((s) => {
+      if (!s.onboardingShown) setShowOnboardingBanner(true);
+    });
+    chrome.runtime
+      .sendMessage({ type: 'TRACK', event: 'sidepanel_opened' })
+      .catch(() => {/* fire-and-forget */});
+  }, []);
+
+  useEffect(() => {
     const handleMessage = (message: { type: string }) => {
       if (message.type === 'SHOW_REVIEW_PROMPT') {
         checkReviewPrompt();
@@ -126,6 +137,22 @@ export default function App() {
     setReviewStep('rate');
     setFeedbackRating(0);
     setFeedbackText('');
+  };
+
+  const handleOpenSetup = () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('/welcome.html') });
+  };
+
+  const handleDismissOnboardingBanner = async () => {
+    await markOnboardingShown();
+    setShowOnboardingBanner(false);
+    chrome.runtime
+      .sendMessage({
+        type: 'TRACK',
+        event: 'onboarding_skipped',
+        params: { via: 'banner_dismiss' },
+      })
+      .catch(() => {/* fire-and-forget */});
   };
 
   const handleRateStar = (stars: number) => {
@@ -301,6 +328,29 @@ export default function App() {
           })}
         </div>
       </header>
+
+      {showOnboardingBanner && (
+        <div className="mx-3 mt-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2">
+          <p className="text-xs font-medium text-brand-800">Finish setup</p>
+          <p className="mt-0.5 text-xs text-brand-700">
+            Choose your privacy preferences — analytics &amp; community.
+          </p>
+          <div className="mt-2 flex items-center justify-between">
+            <button
+              onClick={handleOpenSetup}
+              className="text-xs font-medium text-brand-700 underline-offset-2 hover:underline"
+            >
+              Open setup →
+            </button>
+            <button
+              onClick={handleDismissOnboardingBanner}
+              className="text-xs text-brand-600 hover:text-brand-800"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {showReviewBanner && reviewStep === 'rate' && (
         <div className="mx-3 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">

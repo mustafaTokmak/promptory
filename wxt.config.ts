@@ -25,6 +25,13 @@ export default defineConfig({
       //     chrome.tabs.query({active:true}).id work without it.
       permissions: [
         'scripting',
+        // Used by background.ts for the periodic flushPendingUploads()
+        // tick. Without this declaration, chrome.alarms is undefined and
+        // calling chrome.alarms.create() crashes the SW on startup, which
+        // prevents the message listener from registering at all —
+        // captures silently stop working. Adding it costs nothing in
+        // CWS review (alarms is a low-warning permission).
+        'alarms',
         ...(browser === 'firefox' ? [] : ['sidePanel']),
       ],
       host_permissions: [

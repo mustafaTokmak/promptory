@@ -3,15 +3,18 @@
  * /go — Google Ads bridge page.
  *
  * Captures the gclid from the inbound ad click into localStorage on
- * page load, then waits for the user to click "Add to Chrome". Same
- * origin as /setting-up which reads the gclid back after install.
+ * page load, then waits for the user to click "Add to <Browser>".
+ * Same origin as /setting-up which reads the gclid back after install.
  *
  * Click-through bridge (vs. auto-redirect) on purpose:
  *   - Shows users they're on the right brand before leaving
  *   - Avoids pop-up blockers / scammy auto-redirect feel
  *   - Higher-intent click → better install rate downstream
+ *
+ * The CTA is rewritten client-side based on the detected browser so a
+ * Firefox user lands on AMO and an Edge user lands on the Edge store.
+ * Initial render is the Chrome variant (largest audience, safe default).
  */
-const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg';
 ---
 
 <!DOCTYPE html>
@@ -99,16 +102,28 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
       font-size: 13px;
       color: #888;
     }
-    .chrome-icon {
+    .browser-icon {
       width: 18px; height: 18px;
-      background: conic-gradient(from 0deg, #4285f4, #ea4335 33%, #fbbc04 66%, #34a853);
       border-radius: 50%;
       display: inline-block;
       position: relative;
     }
-    .chrome-icon::after {
+    .browser-icon[data-browser="chrome"] {
+      background: conic-gradient(from 0deg, #4285f4, #ea4335 33%, #fbbc04 66%, #34a853);
+    }
+    .browser-icon[data-browser="chrome"]::after {
       content: ''; position: absolute; inset: 4px;
       background: #fff; border-radius: 50%;
+    }
+    .browser-icon[data-browser="edge"] {
+      background: conic-gradient(from 200deg, #0078d4, #00bcf2 40%, #50e6ff 70%, #0078d4);
+    }
+    .browser-icon[data-browser="edge"]::after {
+      content: ''; position: absolute; inset: 5px;
+      background: #fff; border-radius: 50%;
+    }
+    .browser-icon[data-browser="firefox"] {
+      background: radial-gradient(circle at 60% 60%, #ffcb05 0%, #ff7139 35%, #e62b1e 70%, #b71c1c 100%);
     }
   </style>
 </head>
@@ -116,12 +131,12 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
   <main class="wrap">
     <div class="inner">
       <div class="logo">P</div>
-      <h1>Add Promptory<br/>to <em>Chrome</em></h1>
+      <h1>Add Promptory<br/>to <em id="browser-name">Chrome</em></h1>
       <p class="lead">Auto-saves every prompt you send to ChatGPT, Claude, Gemini and more — so you never lose a great one.</p>
 
-      <a class="cta" href={CWS_URL} id="cta">
-        <span class="chrome-icon"></span>
-        Add to Chrome — it's free
+      <a class="cta" href="https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg" id="cta">
+        <span class="browser-icon" data-browser="chrome" id="cta-icon"></span>
+        <span id="cta-label">Add to Chrome — it's free</span>
       </a>
 
       <div class="meta">No account · Works in 30 seconds</div>
@@ -130,13 +145,58 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
 
   <script is:inline>
     /**
-     * Capture the gclid into localStorage on page load. /setting-up reads
-     * it after install to fire an offline conversion to Google Ads.
+     * Marketplace registry. Initial render uses the 'chrome' variant;
+     * detectBrowser() picks the right key and we rewrite the CTA + heading.
      */
+    var MARKETPLACES = {
+      chrome: {
+        url: 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefilahgcpipcckg',
+        label: "Add to Chrome — it's free",
+        name: 'Chrome',
+      },
+      edge: {
+        url: 'https://microsoftedge.microsoft.com/addons/detail/promptory-ai-prompt-dir/glbjaogmndihnahlnkjgdgigichmkbhp',
+        label: "Add to Edge — it's free",
+        name: 'Edge',
+      },
+      firefox: {
+        url: 'https://addons.mozilla.org/en-US/firefox/addon/promptory/',
+        label: "Add to Firefox — it's free",
+        name: 'Firefox',
+      },
+    };
+
+    /**
+     * TODO(you): Implement browser detection.
+     *
+     * Inspect navigator.userAgent (and optionally navigator.userAgentData
+     * if you want to be modern) and return one of: 'chrome' | 'edge' |
+     * 'firefox'. Return 'chrome' as the default for anything else
+     * (Safari, Opera, etc.) since CWS is the broadest catalog.
+     *
+     * Trade-offs to think about:
+     *   - Edge UA contains BOTH "Edg/" and "Chrome/" (Chromium-based).
+     *     If you check Chrome before Edge, Edge users go to CWS. That
+     *     might actually be fine — CWS works on Edge and has the most
+     *     reviews/social proof. But if our Edge listing has a separate
+     *     marketing budget, sending Edge users to the Edge store keeps
+     *     attribution clean. Pick a side based on product intent.
+     *   - Firefox UA contains "Firefox/" and never "Chrome/" — easy.
+     *   - Opera/Brave/Arc are Chromium-based and will look like Chrome.
+     *     That's OK; they all install from CWS.
+     *
+     * Keep it small — 5–10 lines is plenty.
+     */
+    function detectBrowser() {
+      // TODO: replace this stub with real detection.
+      return 'chrome';
+    }
+
     (function () {
+      // Capture gclid for /setting-up to fire an offline ad conversion.
       try {
-        const url = new URL(window.location.href);
-        const gclid = url.searchParams.get('gclid');
+        var url = new URL(window.location.href);
+        var gclid = url.searchParams.get('gclid');
         if (gclid && /^[A-Za-z0-9_-]{16,200}$/.test(gclid)) {
           localStorage.setItem(
             'promptory_gclid',
@@ -145,6 +205,22 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
         }
       } catch (e) {
         // ignore
+      }
+
+      // Rewrite CTA + heading for the detected browser.
+      try {
+        var key = detectBrowser();
+        var mp = MARKETPLACES[key] || MARKETPLACES.chrome;
+        var cta = document.getElementById('cta');
+        var icon = document.getElementById('cta-icon');
+        var label = document.getElementById('cta-label');
+        var name = document.getElementById('browser-name');
+        if (cta) cta.setAttribute('href', mp.url);
+        if (icon) icon.setAttribute('data-browser', key);
+        if (label) label.textContent = mp.label;
+        if (name) name.textContent = mp.name;
+      } catch (e) {
+        // leave the Chrome default in place
       }
     })();
   </script>
