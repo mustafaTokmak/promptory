@@ -166,29 +166,13 @@
       },
     };
 
-    /**
-     * TODO(you): Implement browser detection.
-     *
-     * Inspect navigator.userAgent (and optionally navigator.userAgentData
-     * if you want to be modern) and return one of: 'chrome' | 'edge' |
-     * 'firefox'. Return 'chrome' as the default for anything else
-     * (Safari, Opera, etc.) since CWS is the broadest catalog.
-     *
-     * Trade-offs to think about:
-     *   - Edge UA contains BOTH "Edg/" and "Chrome/" (Chromium-based).
-     *     If you check Chrome before Edge, Edge users go to CWS. That
-     *     might actually be fine — CWS works on Edge and has the most
-     *     reviews/social proof. But if our Edge listing has a separate
-     *     marketing budget, sending Edge users to the Edge store keeps
-     *     attribution clean. Pick a side based on product intent.
-     *   - Firefox UA contains "Firefox/" and never "Chrome/" — easy.
-     *   - Opera/Brave/Arc are Chromium-based and will look like Chrome.
-     *     That's OK; they all install from CWS.
-     *
-     * Keep it small — 5–10 lines is plenty.
-     */
+    // Order matters: Edge UA contains both "Edg/" and "Chrome/", so test
+    // Edge first or Edge users get routed to CWS. Firefox is exclusive.
+    // Brave/Opera/Arc fall through to 'chrome' (all install from CWS).
     function detectBrowser() {
-      // TODO: replace this stub with real detection.
+      var ua = navigator.userAgent || '';
+      if (/Firefox\//.test(ua)) return 'firefox';
+      if (/Edg\//.test(ua)) return 'edge';
       return 'chrome';
     }
 

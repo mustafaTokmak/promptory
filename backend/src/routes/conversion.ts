@@ -65,6 +65,7 @@ async function uploadConversion(
     'GOOGLE_ADS_REFRESH_TOKEN',
     'GOOGLE_ADS_CLIENT_ID',
     'GOOGLE_ADS_CLIENT_SECRET',
+    'GOOGLE_ADS_LOGIN_CUSTOMER_ID',
     'GOOGLE_ADS_CUSTOMER_ID',
     'GOOGLE_ADS_CONVERSION_ACTION_ID',
   ];
@@ -79,14 +80,17 @@ async function uploadConversion(
     const accessToken = await fetchAccessToken(env);
     const conversionDate = formatGoogleAdsDate(conversionAt);
 
+    // login-customer-id = MCC (manager). URL customer ID = client account
+    // where the conversion action lives. These differ when the dev token
+    // is held by a manager but conversions land on a sub-account.
     const res = await fetch(
-      `https://googleads.googleapis.com/v17/customers/${env.GOOGLE_ADS_CUSTOMER_ID}:uploadClickConversions`,
+      `https://googleads.googleapis.com/v20/customers/${env.GOOGLE_ADS_CUSTOMER_ID}:uploadClickConversions`,
       {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'developer-token': env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-          'login-customer-id': env.GOOGLE_ADS_CUSTOMER_ID!,
+          'login-customer-id': env.GOOGLE_ADS_LOGIN_CUSTOMER_ID!,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -100,7 +104,7 @@ async function uploadConversion(
             },
           ],
           partialFailure: true,
-          validateOnly: false,
+          validateOnly: env.GOOGLE_ADS_VALIDATE_ONLY === 'true',
         }),
       },
     );

@@ -25,7 +25,8 @@ id = "b24da5afc00a4ea78a129a3c107299d4"
 #   wrangler secret put GOOGLE_ADS_REFRESH_TOKEN
 #   wrangler secret put GOOGLE_ADS_CLIENT_ID
 #   wrangler secret put GOOGLE_ADS_CLIENT_SECRET
-#   wrangler secret put GOOGLE_ADS_CUSTOMER_ID
+#   wrangler secret put GOOGLE_ADS_LOGIN_CUSTOMER_ID   # MCC (manager) account, digits only
+#   wrangler secret put GOOGLE_ADS_CUSTOMER_ID         # client account that owns the conversion
 #   wrangler secret put GOOGLE_ADS_CONVERSION_ACTION_ID
 
 [vars]
