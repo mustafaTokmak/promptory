@@ -16,7 +16,7 @@ export default defineConfig({
       name: 'Promptory - AI Prompt Directory for ChatGPT',
       description:
         'Auto-save and organize your AI conversations. Search, reuse, and never lose a great prompt again.',
-      version: '0.1.2',
+      version: '0.2.0',
       // CWS Purple Potassium policy: declare only permissions actually used.
       //   - 'storage' was removed in 0.1.1: we use Dexie/IndexedDB for all
       //     persistence, never chrome.storage.* — so the permission was
