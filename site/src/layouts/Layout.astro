@@ -35,6 +35,17 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- GA4: shared property with extension (G-B9R8M4RJP6). Same snippet
+       also lives in go.astro and setting-up.astro since those pages
+       don't extend this layout. -->
+  <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-B9R8M4RJP6"></script>
+  <script is:inline>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-B9R8M4RJP6');
+  </script>
 </head>
 <body>
 
@@ -50,7 +61,7 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
         <a href="/#how-it-works" class="nav-hide">How it works</a>
         <a href="/about">About</a>
         <a href="/privacy">Privacy</a>
-        <a href={CWS_URL} target="_blank" class="btn-primary">
+        <a href={CWS_URL} target="_blank" class="btn-primary" data-cta="nav">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="7.5" stroke="white" stroke-opacity=".5"/>
             <circle cx="8" cy="8" r="3" fill="white"/>
@@ -74,11 +85,25 @@ const CWS_URL = 'https://chromewebstore.google.com/detail/hbaodafglfcggljhdefila
       <div class="footer-links">
         <a href="/about">About</a>
         <a href="/privacy">Privacy</a>
-        <a href={CWS_URL} target="_blank">Chrome Web Store</a>
+        <a href={CWS_URL} target="_blank" data-cta="footer">Chrome Web Store</a>
       </div>
       <span class="footer-copy">© {new Date().getFullYear()} Promptory</span>
     </div>
   </footer>
 
+  <!-- Fire cta_install_click on any element with data-cta="<location>".
+       The CWS link is target="_blank" so navigation doesn't kill the
+       page — sendBeacon-style gtag dispatch is reliable here. -->
+  <script is:inline>
+    document.querySelectorAll('[data-cta]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (typeof gtag === 'function') {
+          gtag('event', 'cta_install_click', {
+            location: el.getAttribute('data-cta'),
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -22,6 +22,18 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Promptory — Setting up…</title>
   <link rel="icon" href="/favicon.png" />
+
+  <!-- GA4 — page_view auto-fires from config; install_completed and
+       conversion_* events fire from the inline script below. Same
+       property as extension + /go for unified funnel reporting. -->
+  <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-B9R8M4RJP6"></script>
+  <script is:inline>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-B9R8M4RJP6');
+  </script>
+
   <style>
     :root { --brand: #e11d48; }
     * { box-sizing: border-box; }
@@ -107,9 +119,24 @@
      * @param {{ gclid: string, capturedAt: number }} stored
      * @returns {Promise<void>}
      */
+    function track(event, params) {
+      // gtag() is defined synchronously by the loader snippet above, so it
+      // is always callable here. dataLayer queues events until the GA4
+      // script finishes loading.
+      try {
+        gtag('event', event, params || {});
+      } catch (e) {
+        // analytics never blocks the conversion path
+      }
+    }
+
     async function fireConversion(stored) {
       try {
-        if (localStorage.getItem(REPORTED_FLAG_KEY) === stored.gclid) return;
+        if (localStorage.getItem(REPORTED_FLAG_KEY) === stored.gclid) {
+          track('conversion_skipped', { reason: 'already_reported' });
+          return;
+        }
+        track('conversion_attempt');
         var res = await fetch(CONVERSION_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -121,15 +148,24 @@
           }),
           keepalive: true,
         });
-        if (res.ok) localStorage.setItem(REPORTED_FLAG_KEY, stored.gclid);
-        else console.warn('[Promptory] conversion API returned', res.status);
+        if (res.ok) {
+          var body = null;
+          try { body = await res.json(); } catch (e) { /* ignore parse */ }
+          track('conversion_success', { deduped: !!(body && body.deduped) });
+          localStorage.setItem(REPORTED_FLAG_KEY, stored.gclid);
+        } else {
+          track('conversion_failed', { reason: 'http_' + res.status });
+          console.warn('[Promptory] conversion API returned', res.status);
+        }
       } catch (err) {
+        track('conversion_failed', { reason: 'network' });
         console.warn('[Promptory] page-side conversion fire failed', err);
       }
     }
 
     (function () {
       var stored = readStoredGclid();
+      track('install_completed', { from_ad: !!stored });
       if (!stored) return;
       fireConversion(stored);
     })();
