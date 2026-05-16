@@ -24,6 +24,9 @@ router.post(
   zValidator('json', ConversionSchema),
   async (c) => {
     const { gclid, conversionTime } = c.req.valid('json');
+    // [DIAGNOSTIC] Temporary — log raw gclid to investigate "unparseable" errors.
+    // Remove once we've confirmed what shape values are arriving from /go.
+    console.log(`[DIAGNOSTIC] gclid received len=${gclid.length} value=${gclid}`);
     const gclidHash = await sha256(gclid);
     const conversionAt = conversionTime ? Date.parse(conversionTime) : Date.now();
 
