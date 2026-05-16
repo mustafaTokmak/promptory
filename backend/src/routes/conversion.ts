@@ -109,12 +109,41 @@ async function uploadConversion(
       },
     );
 
+    // partialFailure: true means Google Ads returns HTTP 200 even when an
+    // individual conversion is rejected — the rejection lives in the
+    // response body under `partialFailureError`. Without parsing it we
+    // can't tell silent rejections (CLICK_NOT_FOUND, expired window,
+    // wrong conversion action) from real successes.
+    const text = await res.text();
     if (!res.ok) {
-      const text = await res.text();
       await env.DB.prepare(
         `UPDATE conversions SET status='failed', error_message=? WHERE gclid_hash=?`,
       )
         .bind(text.slice(0, 500), gclidHash)
+        .run();
+      return;
+    }
+
+    type AdsResponse = {
+      partialFailureError?: { message?: string; details?: unknown[] };
+      results?: Array<Record<string, unknown>>;
+    };
+    let parsed: AdsResponse = {};
+    try {
+      parsed = JSON.parse(text) as AdsResponse;
+    } catch {
+      // Non-JSON 200 from Google would be unusual but not worth crashing.
+    }
+
+    if (parsed.partialFailureError) {
+      const detail =
+        typeof parsed.partialFailureError.message === 'string'
+          ? parsed.partialFailureError.message
+          : JSON.stringify(parsed.partialFailureError);
+      await env.DB.prepare(
+        `UPDATE conversions SET status='failed', error_message=? WHERE gclid_hash=?`,
+      )
+        .bind(`partial: ${detail}`.slice(0, 500), gclidHash)
         .run();
       return;
     }
