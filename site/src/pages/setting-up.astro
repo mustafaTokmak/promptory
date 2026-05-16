@@ -56,6 +56,83 @@
     setTimeout(() => {
       document.getElementById('fallback')?.classList.add('show');
     }, 5000);
+
+    // ─── Page-side conversion fire (stopgap for v0.2.0) ──────────────────
+    // The extension's content-script → background → API chain isn't
+    // reporting reliably. We're firing the same POST directly from this
+    // page until the extension flow is fixed. /setting-up is only ever
+    // opened by the extension's onInstalled handler, and we additionally
+    // gate on gclid presence — so this only fires for ad-attributed
+    // installs, never random visitors.
+    var CONVERSION_ENDPOINT = 'https://api.promptory.chat/v1/conversion';
+    var REPORTED_FLAG_KEY = 'promptory_gclid_reported';
+    var MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // matches /go
+
+    function readStoredGclid() {
+      try {
+        var raw = localStorage.getItem('promptory_gclid');
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        if (!parsed || !parsed.value) return null;
+        var age = Date.now() - (parsed.capturedAt || 0);
+        if (age > MAX_AGE_MS) {
+          localStorage.removeItem('promptory_gclid');
+          return null;
+        }
+        return { gclid: parsed.value, capturedAt: parsed.capturedAt || Date.now() };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    /**
+     * Fire the install conversion to api.promptory.chat/v1/conversion.
+     *
+     * Body shape (matches what the extension was sending — keep it identical
+     * so backend dedup-by-gclid keeps working once the extension is fixed):
+     *   { gclid, conversionTime: <ISO string>, capturedAt: <ms epoch> }
+     *
+     * Decisions to make:
+     *   1. De-dup on the client: if a user reloads /setting-up, do we re-fire?
+     *      Suggested: write REPORTED_FLAG_KEY to localStorage on success,
+     *      skip the POST if it's already set. Backend should also dedup,
+     *      but client-side avoids the wasted request.
+     *   2. Error handling: log and move on (telemetry must never throw),
+     *      do NOT block UI on this — the page's primary job is to swap to
+     *      the dashboard, not to confirm conversion.
+     *   3. Keep-alive: this tab may close fast once the extension takes
+     *      over. Use `fetch(..., { keepalive: true })` so the request
+     *      survives tab teardown.
+     *
+     * @param {{ gclid: string, capturedAt: number }} stored
+     * @returns {Promise<void>}
+     */
+    async function fireConversion(stored) {
+      try {
+        if (localStorage.getItem(REPORTED_FLAG_KEY) === stored.gclid) return;
+        var res = await fetch(CONVERSION_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gclid: stored.gclid,
+            conversionTime: new Date().toISOString(),
+            capturedAt: stored.capturedAt,
+            source: 'page',
+          }),
+          keepalive: true,
+        });
+        if (res.ok) localStorage.setItem(REPORTED_FLAG_KEY, stored.gclid);
+        else console.warn('[Promptory] conversion API returned', res.status);
+      } catch (err) {
+        console.warn('[Promptory] page-side conversion fire failed', err);
+      }
+    }
+
+    (function () {
+      var stored = readStoredGclid();
+      if (!stored) return;
+      fireConversion(stored);
+    })();
   </script>
 </body>
 </html>
