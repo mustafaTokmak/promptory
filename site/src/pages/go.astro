@@ -25,6 +25,18 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Promptory — Add to Chrome</title>
   <link rel="icon" href="/favicon.png" />
+
+  <!-- GA4 — pageview (auto-fires from config) + cta_install_click event
+       below. Shared property with the extension (G-B9R8M4RJP6) so /go
+       events land alongside extension events in the same reports. -->
+  <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-B9R8M4RJP6"></script>
+  <script is:inline>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-B9R8M4RJP6');
+  </script>
+
   <style>
     :root {
       --brand: #e11d48;
@@ -192,8 +204,10 @@
       }
 
       // Rewrite CTA + heading for the detected browser.
+      var ctaBrowserKey = 'chrome';
       try {
         var key = detectBrowser();
+        ctaBrowserKey = key;
         var mp = MARKETPLACES[key] || MARKETPLACES.chrome;
         var cta = document.getElementById('cta');
         var icon = document.getElementById('cta-icon');
@@ -205,6 +219,21 @@
         if (name) name.textContent = mp.name;
       } catch (e) {
         // leave the Chrome default in place
+      }
+
+      // Fire GA4 click event when the user clicks the install CTA.
+      // CTA is a real <a> with target=_blank, so the click navigates the
+      // user away — gtag's beacon mechanism handles the in-flight event,
+      // no preventDefault needed.
+      try {
+        var ctaEl = document.getElementById('cta');
+        if (ctaEl && typeof gtag === 'function') {
+          ctaEl.addEventListener('click', function () {
+            gtag('event', 'cta_install_click', { browser: ctaBrowserKey });
+          });
+        }
+      } catch (e) {
+        // analytics never blocks the click
       }
     })();
   </script>
