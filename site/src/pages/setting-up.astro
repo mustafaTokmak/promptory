@@ -77,18 +77,22 @@
     // gate on gclid presence — so this only fires for ad-attributed
     // installs, never random visitors.
     var CONVERSION_ENDPOINT = 'https://api.promptory.chat/v1/conversion';
-    var REPORTED_FLAG_KEY = 'promptory_gclid_reported';
+    // Page-side keys are isolated from the extension's (promptory_gclid /
+    // promptory_site.content.ts). /go writes both on capture so the two
+    // paths never race or clobber each other.
+    var AD_CLICK_KEY = 'promptory_ad_click';
+    var REPORTED_FLAG_KEY = 'promptory_ad_click_reported';
     var MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // matches /go
 
     function readStoredGclid() {
       try {
-        var raw = localStorage.getItem('promptory_gclid');
+        var raw = localStorage.getItem(AD_CLICK_KEY);
         if (!raw) return null;
         var parsed = JSON.parse(raw);
         if (!parsed || !parsed.value) return null;
         var age = Date.now() - (parsed.capturedAt || 0);
         if (age > MAX_AGE_MS) {
-          localStorage.removeItem('promptory_gclid');
+          localStorage.removeItem(AD_CLICK_KEY);
           return null;
         }
         return { gclid: parsed.value, capturedAt: parsed.capturedAt || Date.now() };

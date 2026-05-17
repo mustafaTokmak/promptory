@@ -190,14 +190,20 @@
 
     (function () {
       // Capture gclid for /setting-up to fire an offline ad conversion.
+      //
+      // We write TWO keys with the same payload:
+      //   - promptory_gclid       — read by the extension content script
+      //     (promptory-site.content.ts) which clears it on success
+      //   - promptory_ad_click    — read by the page-side fireConversion on
+      //     /setting-up; isolated from the extension so the two paths can
+      //     never clobber each other's state
       try {
         var url = new URL(window.location.href);
         var gclid = url.searchParams.get('gclid');
         if (gclid && /^[A-Za-z0-9_-]{16,200}$/.test(gclid)) {
-          localStorage.setItem(
-            'promptory_gclid',
-            JSON.stringify({ value: gclid, capturedAt: Date.now() }),
-          );
+          var payload = JSON.stringify({ value: gclid, capturedAt: Date.now() });
+          localStorage.setItem('promptory_gclid', payload);
+          localStorage.setItem('promptory_ad_click', payload);
         }
       } catch (e) {
         // ignore
